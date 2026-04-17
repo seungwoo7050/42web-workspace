@@ -1,0 +1,84 @@
+name: container-stack
+
+on:
+  push:
+    branches: ["**"]
+    paths-ignore: ["**/*.md"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  COMPOSE_ANSI: never
+  DOCKER_BUILDKIT: "1"
+
+jobs:
+  static:
+    name: 정적 구성 검사
+    # Python 버전 고정값이 저장소에 없고 도구는 표준 라이브러리만 쓴다 - 러너 이미지를 고정해 python3(3.12)를 고정한다
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      # .env.example은 없는 secrets/*.txt를 가리키지만 config는 경로만 해석하므로 비밀 파일 없이 통과한다
+      - name: Compose 구성 검사
+        run: make check-functional
+      - name: Python 구문 검사
+        run: python3 -m compileall -q tools tests
+
+  runtime:
+    name: 런타임 시나리오 (${{ matrix.label }})
+    # 시나리오마다 이미지를 새로 빌드하는 무거운 job이라, 몇 초면 끝나는 구성 검사가 실패하면 띄우지 않는다
+    needs: static
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ matrix.job-timeout }}
+    strategy:
+      # 한 시나리오가 실패해도 나머지 결과를 끝까지 본다
+      fail-fast: false
+      # job마다 별도 러너(별도 Docker 데몬)라 병렬로 돌려도 프로젝트·포트·볼륨이 서로 간섭하지 않는다
+      matrix:
+        include:
+          - { scenario: e2e, label: HTTPS 종단, timeout: 25, job-timeout: 35 }
+          - { scenario: bootstrap, label: 초기화 강제 종료 복구, timeout: 40, job-timeout: 50 }
+          - { scenario: persistence, label: 영속성, timeout: 25, job-timeout: 35 }
+          - { scenario: backup-restore, label: 백업과 복원, timeout: 30, job-timeout: 40 }
+          - { scenario: rotation, label: 자격증명 회전, timeout: 30, job-timeout: 40 }
+          - { scenario: operations, label: 운영 설정, timeout: 25, job-timeout: 35 }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: 진단 경로 준비
+        run: install -d -m 0700 artifacts artifacts/projects
+      # 비밀 파일은 runtime_stack.py가 임시 디렉터리에 무작위 값으로 만들고 끝나면 지운다
+      - name: ${{ matrix.label }} 검증
+        timeout-minutes: ${{ matrix.timeout }}
+        run: >-
+          python3 tests/runtime_stack.py "${{ matrix.scenario }}"
+          --diagnostics-dir "artifacts/${{ matrix.scenario }}"
+          --project-record-dir artifacts/projects
+      - name: 격리 자원 정리 확인
+        if: always()
+        run: python3 tools/cleanup_test_resources.py --project-record-dir artifacts/projects --report artifacts/cleanup.txt
+      - name: 실패하면 진단 결과를 남긴다
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics-${{ matrix.scenario }}-${{ github.run_attempt }}
+          path: |
+            artifacts/**/versions.txt
+            artifacts/**/compose-ps.txt
+            artifacts/**/compose-logs.txt
+            artifacts/**/compose-model.txt
+            artifacts/**/container-state.txt
+            artifacts/cleanup.txt
+          if-no-files-found: ignore
+          retention-days: 7
+          include-hidden-files: false
