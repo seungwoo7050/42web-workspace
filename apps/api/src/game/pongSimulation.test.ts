@@ -55,6 +55,51 @@ describe("PongSimulation", () => {
     });
   });
 
+  it("keeps playing a golden goal when the clock runs out on a tie", () => {
+    const state = { ...PongSimulation.initialState(), tick: 899, leftScore: 1, rightScore: 1 };
+
+    const overtime = PongSimulation.step(state, { left: 0, right: 0 }, FIXED_DELTA_MS);
+
+    expect(overtime).toMatchObject({ phase: "playing", tick: 900, winnerSide: null });
+  });
+
+  it("ends overtime on the next goal", () => {
+    const state = { ...PongSimulation.initialState(), tick: 950, leftScore: 1, rightScore: 1 };
+    state.ball = { position: { x: -1, y: 300 }, velocity: { x: 0, y: 0 } };
+
+    const finished = PongSimulation.step(state, { left: 0, right: 0 }, FIXED_DELTA_MS);
+
+    expect(finished).toMatchObject({ phase: "finished", leftScore: 1, rightScore: 2, winnerSide: "right" });
+  });
+
+  it("awards the leader when the clock runs out without a tie", () => {
+    const state = { ...PongSimulation.initialState(), tick: 899, leftScore: 0, rightScore: 2 };
+
+    const finished = PongSimulation.step(state, { left: 0, right: 0 }, FIXED_DELTA_MS);
+
+    expect(finished).toMatchObject({ phase: "finished", winnerSide: "right" });
+  });
+
+  it("still returns the ball on the last tick of overtime", () => {
+    // step()은 tick을 먼저 올리므로 이 스텝은 2099틱, 상한(900 + 1,200) 바로 앞이다.
+    const state = overtimeRallyState(900 + 1_198);
+
+    const next = PongSimulation.step(state, { left: 0, right: 0 }, FIXED_DELTA_MS);
+
+    expect(next.ball.velocity.x).toBeGreaterThan(0);
+    expect(next.phase).toBe("playing");
+  });
+
+  it("stops returning the ball once overtime reaches its cap so the next crossing ends the match", () => {
+    let state = overtimeRallyState(900 + 1_199);
+
+    for (let tick = 0; tick < 10 && state.phase === "playing"; tick += 1) {
+      state = PongSimulation.step(state, { left: 0, right: 0 }, FIXED_DELTA_MS);
+    }
+
+    expect(state).toMatchObject({ phase: "finished", leftScore: 1, rightScore: 2, winnerSide: "right" });
+  });
+
   it("rejects invalid time deltas", () => {
     const state = PongSimulation.initialState();
     expect(() => PongSimulation.step(state, { left: 0, right: 0 }, 0)).toThrow(RangeError);
@@ -86,3 +131,12 @@ function replayHash(seed: string): string {
     .update(JSON.stringify({ state, ai: ai.snapshot() }))
     .digest("hex");
 }
+
+// 1:1 연장 중, 공이 왼쪽 패들 바로 앞에서 패들 쪽으로 오고 패들이 공 높이에 맞춰 서 있는 상태
+function overtimeRallyState(tick: number) {
+  const state = { ...PongSimulation.initialState(), tick, leftScore: 1, rightScore: 1 };
+  state.ball = { position: { x: 48, y: 300 }, velocity: { x: -10, y: 0 } };
+  state.paddles.left.y = 300 - PADDLE_HEIGHT / 2;
+  return state;
+}
+

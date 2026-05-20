@@ -38,6 +38,9 @@ const PADDLE_SPEED_PER_TICK = 13;
 const BALL_ACCELERATION_PER_TICK = 0.015;
 const MAX_BALL_SPEED = 18;
 const MAX_MATCH_TICKS = TICK_RATE * 45;
+// 골든골 연장의 상한. 패들이 공보다 빨라 끝없이 받아낼 수 있으므로, 이 시간이 지나면 패들이 공을 더 받지 못하게 해
+// 다음에 공이 골라인을 넘는 순간 경기가 끝나게 한다.
+const MAX_OVERTIME_TICKS = TICK_RATE * 60;
 const ARENA_PADDING = 16;
 
 export class PongSimulation {
@@ -78,8 +81,10 @@ export class PongSimulation {
     next.ball.position.x += next.ball.velocity.x * timestepScale;
     next.ball.position.y += next.ball.velocity.y * timestepScale;
     reflectVerticalWall(next.ball);
-    collidePaddle(next, "left", 32);
-    collidePaddle(next, "right", GAME_WIDTH - 32);
+    if (next.tick < MAX_MATCH_TICKS + MAX_OVERTIME_TICKS) {
+      collidePaddle(next, "left", 32);
+      collidePaddle(next, "right", GAME_WIDTH - 32);
+    }
 
     if (next.ball.position.x < 0) {
       next.rightScore += 1;
@@ -90,13 +95,11 @@ export class PongSimulation {
     }
 
     accelerateBall(next, timestepScale);
-    if (
-      next.leftScore >= WINNING_SCORE ||
-      next.rightScore >= WINNING_SCORE ||
-      next.tick >= MAX_MATCH_TICKS
-    ) {
+    // 시간이 다 됐는데 동점이면 끝내지 않고 다음 득점자가 이기는 골든골로 이어 간다.
+    const timedOut = next.tick >= MAX_MATCH_TICKS && next.leftScore !== next.rightScore;
+    if (next.leftScore >= WINNING_SCORE || next.rightScore >= WINNING_SCORE || timedOut) {
       next.phase = "finished";
-      next.winnerSide = next.leftScore >= next.rightScore ? "left" : "right";
+      next.winnerSide = next.leftScore > next.rightScore ? "left" : "right";
       next.paddles.left.direction = 0;
       next.paddles.right.direction = 0;
     }
