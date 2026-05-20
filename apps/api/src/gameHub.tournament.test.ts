@@ -51,6 +51,53 @@ describe("GameHub tournament boundary", () => {
     expect(left.latest("queue.matched")).toEqual(expect.objectContaining({ side: "left" }));
     expect(right.latest("queue.matched")).toEqual(expect.objectContaining({ side: "right" }));
   });
+
+  it("lets players rejoin a running tournament match whose room was abandoned", async () => {
+    vi.useFakeTimers();
+    try {
+      const repository = createMemoryRepository();
+      repositories.push(repository);
+      const match = {
+        id: "tournament-match-1",
+        tournamentId: "tournament-1",
+        round: "semifinal" as const,
+        slot: 1,
+        status: "ready" as "ready" | "running",
+        leftUserId: "left-id",
+        rightUserId: "right-id",
+        winnerId: null
+      };
+      vi.spyOn(repository, "getTournamentMatch").mockImplementation(async () => ({ ...match }));
+      vi.spyOn(repository, "startTournamentMatch").mockImplementation(async () => {
+        match.status = "running";
+      });
+      const hub = new GameHub(repository);
+      hubs.push(hub);
+      const left = connect(hub, player("left"));
+      const right = connect(hub, player("right"));
+
+      left.receive({ v: 1, type: "tournament.join", matchId: match.id });
+      right.receive({ v: 1, type: "tournament.join", matchId: match.id });
+      await vi.waitFor(() => expect(match.status).toBe("running"));
+      expect(hub.liveStats().activeRooms).toBe(1);
+
+      left.terminate();
+      right.terminate();
+      await vi.advanceTimersByTimeAsync(15_001);
+      expect(hub.liveStats().activeRooms).toBe(0);
+
+      const rejoinedLeft = connect(hub, player("left"));
+      const rejoinedRight = connect(hub, player("right"));
+      rejoinedLeft.receive({ v: 1, type: "tournament.join", matchId: match.id });
+      rejoinedRight.receive({ v: 1, type: "tournament.join", matchId: match.id });
+
+      await vi.waitFor(() => expect(hub.liveStats().activeRooms).toBe(1));
+      expect(rejoinedLeft.latest("queue.matched")).toEqual(expect.objectContaining({ side: "left" }));
+      expect(rejoinedRight.latest("queue.matched")).toEqual(expect.objectContaining({ side: "right" }));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 function connect(hub: GameHub, user: SessionUser): FakeSocket {

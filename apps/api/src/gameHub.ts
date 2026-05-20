@@ -585,7 +585,8 @@ export class GameHub {
     this.leaveQueue(client);
     this.leaveTournamentWaiters(client);
     const match = await this.repo.getTournamentMatch(matchId);
-    if (!match || match.status !== "ready") {
+    const resumable = match?.status === "running" && !this.hasTournamentRoom(matchId);
+    if (!match || (match.status !== "ready" && !resumable)) {
       this.send(client, { type: "error", code: "not_found", message: "참가할 수 없는 토너먼트 경기입니다." });
       return;
     }
@@ -616,6 +617,13 @@ export class GameHub {
       if (room) this.abandonRoom(room);
       throw error;
     }
+  }
+
+  private hasTournamentRoom(matchId: string): boolean {
+    for (const room of this.rooms.values()) {
+      if (room.tournamentMatchId === matchId) return true;
+    }
+    return false;
   }
 
   private leaveQueue(client: Client): void {
