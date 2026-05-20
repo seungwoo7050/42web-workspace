@@ -145,10 +145,15 @@ export class GameHub {
     timer: ReturnType<typeof setTimeout>;
   } | null = null;
 
+  private readonly inputClock: () => number;
+
   constructor(
     private readonly repo: GameHubRepository,
-    private readonly observer: GameHubObserver = {}
-  ) {}
+    private readonly observer: GameHubObserver = {},
+    options: { inputClock?: () => number } = {}
+  ) {
+    this.inputClock = options.inputClock ?? (() => performance.now());
+  }
 
   get retainedGuestResultCount(): number {
     return this.recentGuestResults.size;
@@ -832,7 +837,7 @@ export class GameHub {
       userId: client.user.id,
       roomId,
       inputSeq,
-      nowMs: performance.now()
+      nowMs: this.inputClock()
     });
     if (decision === "stale") return;
     if (decision === "rate_limited") {

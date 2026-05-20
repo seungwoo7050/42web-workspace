@@ -17,7 +17,7 @@ describe("GameHub runtime protection", () => {
   it("returns the stable rate_limited error after the input burst is exhausted", async () => {
     const repository = createMemoryRepository();
     repositories.push(repository);
-    const hub = new GameHub(repository);
+    const hub = new GameHub(repository, {}, { inputClock: () => 0 });
     const socket = new FakeSocket();
     hub.connect(socket as unknown as WebSocket, {} as IncomingMessage, user());
 
