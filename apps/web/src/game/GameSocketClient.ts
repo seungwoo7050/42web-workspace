@@ -11,7 +11,7 @@ export interface GameWebSocket {
   close(): void;
   onopen: (() => void) | null;
   onmessage: ((event: { data: unknown }) => void) | null;
-  onclose: (() => void) | null;
+  onclose: ((event?: { code?: number }) => void) | null;
   onerror: (() => void) | null;
 }
 
@@ -34,6 +34,12 @@ const OPEN = 1;
 const RECONNECT_WINDOW_MS = 15_000;
 const INITIAL_RECONNECT_DELAY_MS = 250;
 const MAX_RECONNECT_DELAY_MS = 2_000;
+// 서버가 다시 붙어도 소용없는 이유로 닫은 연결이다(apps/api/src/gameHub.ts의 close code와 같은 값).
+// 재연결하면 4001은 다른 탭의 연결을 다시 빼앗고, 4003은 정지된 계정으로 티켓 요청만 반복한다.
+const TERMINAL_CLOSE_MESSAGES: Record<number, string> = {
+  4001: "다른 탭이나 창에서 이 경기에 연결해 이 화면의 연결을 끊었습니다.",
+  4003: "정지된 계정이라 실시간 연결이 종료되었습니다."
+};
 
 export class GameSocketClient {
   private socket: GameWebSocket | null = null;
@@ -101,9 +107,14 @@ export class GameSocketClient {
     socket.onerror = () => {
       if (this.isCurrent(socket, generation)) socket.close();
     };
-    socket.onclose = () => {
+    socket.onclose = (event) => {
       if (!this.isCurrent(socket, generation)) return;
       this.socket = null;
+      const terminalMessage = event?.code === undefined ? undefined : TERMINAL_CLOSE_MESSAGES[event.code];
+      if (terminalMessage) {
+        handlers.onFailure(new Error(terminalMessage));
+        return;
+      }
       if (handlers.onClosed() === true) this.scheduleReconnect(generation, handlers);
     };
   }

@@ -132,12 +132,50 @@ describe("GameSocketClient", () => {
   });
 });
 
+describe("GameSocketClient terminal close codes", () => {
+  it.each([
+    [4001, "다른 탭"],
+    [4003, "정지된 계정"]
+  ])("does not reconnect after server close code %i", async (code, messagePart) => {
+    vi.useFakeTimers();
+    const sockets: FakeSocket[] = [];
+    const ticketProvider = vi.fn(async () => ticket);
+    const onClosed = vi.fn(() => true);
+    const onFailure = vi.fn();
+    const client = new GameSocketClient({
+      url: "ws://localhost:4000/ws",
+      ticketProvider,
+      socketFactory: (url) => {
+        const socket = new FakeSocket(url);
+        sockets.push(socket);
+        return socket;
+      }
+    });
+
+    await client.connect(
+      { v: 1, type: "queue.join", mode: "queue" },
+      handlers({ onClosed, onFailure })
+    );
+    sockets[0].open();
+    sockets[0].close(code);
+    await vi.advanceTimersByTimeAsync(20_000);
+
+    expect(onClosed).not.toHaveBeenCalled();
+    expect(onFailure).toHaveBeenCalledOnce();
+    expect(String(onFailure.mock.calls[0][0])).toContain(messagePart);
+    expect(ticketProvider).toHaveBeenCalledTimes(1);
+    expect(sockets).toHaveLength(1);
+    client.close();
+    vi.useRealTimers();
+  });
+});
+
 class FakeSocket implements GameWebSocket {
   readyState = 0;
   sent: string[] = [];
   onopen: (() => void) | null = null;
   onmessage: ((event: { data: unknown }) => void) | null = null;
-  onclose: (() => void) | null = null;
+  onclose: ((event?: { code?: number }) => void) | null = null;
   onerror: (() => void) | null = null;
 
   constructor(public url: string) {}
@@ -146,9 +184,9 @@ class FakeSocket implements GameWebSocket {
     this.sent.push(payload);
   }
 
-  close(): void {
+  close(code?: number): void {
     this.readyState = 3;
-    this.onclose?.();
+    this.onclose?.(code === undefined ? undefined : { code });
   }
 
   open(): void {
