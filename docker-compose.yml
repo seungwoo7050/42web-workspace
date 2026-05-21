@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: pong_pong
       POSTGRES_USER: pong
@@ -28,6 +29,8 @@ services:
 
   api:
     image: pong-pong-api:local
+    # 기동 뒤 프로세스가 죽으면 다시 띄운다. migrate는 한 번만 도는 작업이라 "no"로 둔다.
+    restart: unless-stopped
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -52,6 +55,7 @@ services:
 
   web:
     image: pong-pong-web:local
+    restart: unless-stopped
     build:
       context: .
       dockerfile: apps/web/Dockerfile
@@ -71,6 +75,7 @@ services:
       - "3000"
 
   caddy:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Caddy.Dockerfile
