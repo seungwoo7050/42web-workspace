@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trophy } from "lucide-react";
 import type { SessionUser, TournamentMatchSummary } from "@pong-pong/shared";
 import { AppShell } from "@/components/AppShell";
-import { createTournament, joinTournament } from "@/lib/api";
+import { createTournament, joinTournament, mutationErrorMessage } from "@/lib/api";
 import {
   invalidateExactQueries,
   meQueryOptions,
@@ -35,7 +35,7 @@ export default function TournamentsPage() {
       setNotice(`${tournament.name}을 생성했습니다.`);
       await invalidateExactQueries(queryClient, mutationInvalidations.tournamentChange());
     },
-    onError: () => setNotice("토너먼트 생성에는 로그인이 필요합니다.")
+    onError: (error) => setNotice(mutationErrorMessage(error, "토너먼트 생성에는 로그인이 필요합니다."))
   });
   const joinMutation = useMutation({
     mutationFn: (id: string) => joinTournament(id),
@@ -44,7 +44,7 @@ export default function TournamentsPage() {
       setNotice(`${tournament.name}에 참가했습니다.`);
       await invalidateExactQueries(queryClient, mutationInvalidations.tournamentChange());
     },
-    onError: () => setNotice("토너먼트 참가에는 로그인이 필요합니다.")
+    onError: (error) => setNotice(mutationErrorMessage(error, "토너먼트 참가에는 로그인이 필요합니다."))
   });
 
   function create() {

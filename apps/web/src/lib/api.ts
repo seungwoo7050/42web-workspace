@@ -56,6 +56,14 @@ export class ApiError extends Error {
   }
 }
 
+// 401만 로그인 안내로 바꾸고, 나머지 API 오류는 서버가 보낸 메시지(정원 초과, 정지 계정 등)를 그대로 보여 준다.
+export function mutationErrorMessage(error: unknown, loginRequiredMessage: string): string {
+  if (error instanceof ApiError) {
+    return error.status === 401 ? loginRequiredMessage : error.message;
+  }
+  return "요청을 처리하지 못했습니다. 잠시 뒤 다시 시도해 주세요.";
+}
+
 export async function apiFetch<T>(
   path: string,
   schema: ResponseSchema<T>,

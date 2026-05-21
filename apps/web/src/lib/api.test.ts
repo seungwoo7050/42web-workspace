@@ -18,6 +18,7 @@ import {
   getLeaderboard,
   getLobby,
   getMe,
+  mutationErrorMessage,
   getOwnProfile,
   getProfile,
   getTournaments,
@@ -359,5 +360,16 @@ describe("API endpoint helpers", () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
 
     await expect(call()).rejects.toMatchObject({ name: "ZodError" });
+  });
+});
+
+describe("mutationErrorMessage", () => {
+  it("shows the login hint only for 401 and the server message otherwise", () => {
+    expect(mutationErrorMessage(new ApiError(401, "authentication_required", "로그인이 필요합니다.", "req-1"), "로그인 안내"))
+      .toBe("로그인 안내");
+    expect(mutationErrorMessage(new ApiError(409, "tournament_full", "참가 인원이 가득 찬 토너먼트입니다.", "req-2"), "로그인 안내"))
+      .toBe("참가 인원이 가득 찬 토너먼트입니다.");
+    expect(mutationErrorMessage(new TypeError("Failed to fetch"), "로그인 안내"))
+      .toBe("요청을 처리하지 못했습니다. 잠시 뒤 다시 시도해 주세요.");
   });
 });
