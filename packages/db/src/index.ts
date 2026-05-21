@@ -179,7 +179,13 @@ export function createPostgresRepository(
   databaseUrl: string,
   options: PostgresRepositoryOptions = {}
 ): AppRepository {
-  const pool = new Pool({ connectionString: databaseUrl });
+  // DB가 응답하지 않을 때 요청과 경기 결과 저장이 끝없이 기다리지 않게 한다.
+  // 실패로 끝나야 HTTP는 500을 돌려주고, 경기 결과 저장은 GameHub의 재시도로 넘어간다.
+  const pool = new Pool({
+    connectionString: databaseUrl,
+    connectionTimeoutMillis: 5_000,
+    query_timeout: 10_000
+  });
   installPostgresPoolErrorHandler(pool, options.onPoolError);
   const db = new Kysely<Database>({ dialect: new PostgresDialect({ pool }) });
   return new PostgresRepository(db, pool);
