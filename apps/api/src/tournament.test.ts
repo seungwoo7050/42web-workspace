@@ -38,6 +38,49 @@ describe("tournament routes", () => {
     expect(listed.json<{ tournaments: Array<{ name: string }> }>().tournaments[0].name).toBe("목요일 컵");
   });
 
+  it("answers 409 for a full cup and 404 for a missing cup instead of 500", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/tournaments",
+      headers: { cookie },
+      payload: { name: "만석 컵" }
+    });
+    const tournamentId = created.json<{ tournament: { id: string } }>().tournament.id;
+    for (const handle of ["full-two", "full-three", "full-four"]) {
+      const login = await app.inject({
+        method: "POST",
+        url: "/auth/dev-login",
+        payload: { handle, displayName: handle }
+      });
+      await app.inject({
+        method: "POST",
+        url: `/tournaments/${tournamentId}/join`,
+        headers: { cookie: sessionCookie(login) }
+      });
+    }
+    const late = await app.inject({
+      method: "POST",
+      url: "/auth/dev-login",
+      payload: { handle: "full-five", displayName: "늦은참가자" }
+    });
+
+    const full = await app.inject({
+      method: "POST",
+      url: `/tournaments/${tournamentId}/join`,
+      headers: { cookie: sessionCookie(late) }
+    });
+    const missing = await app.inject({
+      method: "POST",
+      url: "/tournaments/00000000-0000-4000-8000-000000000000/join",
+      headers: { cookie }
+    });
+
+    expect(full.statusCode).toBe(409);
+    expect(full.json<{ error: { code: string } }>().error.code).toBe("tournament_full");
+    expect(missing.statusCode).toBe(404);
+    expect(missing.json<{ error: { code: string } }>().error.code).toBe("not_found");
+  });
+
   it("creates semifinal matches when a cup fills", async () => {
     const created = await app.inject({
       method: "POST",

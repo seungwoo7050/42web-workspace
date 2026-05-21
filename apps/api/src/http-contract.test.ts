@@ -114,6 +114,18 @@ describe("JSON HTTP request contracts", () => {
     }
   );
 
+  it("keeps a malformed JSON body as 400 in the shared error envelope instead of 500", async () => {
+    const response = await app.inject({
+      method: "POST",
+      url: "/auth/dev-login",
+      headers: { "content-type": "application/json" },
+      payload: "{bad"
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(apiErrorBodySchema.parse(response.json()).error.code).toBe("bad_request");
+  });
+
   it("keeps an explicit strict body contract for a bodyless JSON GET route", () => {
     expect(jsonHttpRequestContracts.leaderboard.body.safeParse({ unexpected: true }).success)
       .toBe(false);

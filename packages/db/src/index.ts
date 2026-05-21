@@ -40,6 +40,7 @@ import type {
   UserRow
 } from "./schema.js";
 import { inspectMigrationSet } from "./migrator.js";
+import { RepositoryError } from "./repositoryError.js";
 import {
   installPostgresPoolErrorHandler,
   type PostgresPoolErrorReporter
@@ -47,6 +48,7 @@ import {
 
 export type { Database } from "./schema.js";
 export type { PostgresPoolErrorEvent, PostgresPoolErrorReporter } from "./poolError.js";
+export { RepositoryError, type RepositoryErrorCode } from "./repositoryError.js";
 
 type MemoryFriendship = {
   id: string;
@@ -334,7 +336,7 @@ class PostgresRepository implements AppRepository {
       where handle = ${normalizeHandle(handle)} and is_npc = false
       returning *
     `.execute(this.db);
-    if (!result.rows[0]) throw new Error("user not found");
+    if (!result.rows[0]) throw new RepositoryError("not_found", "user not found");
     return toPublicUser(result.rows[0]);
   }
 
@@ -404,7 +406,7 @@ class PostgresRepository implements AppRepository {
 
   async getDashboard(userId: string): Promise<DashboardSummary> {
     const user = await this.getUserById(userId);
-    if (!user) throw new Error("user not found");
+    if (!user) throw new RepositoryError("not_found", "user not found");
     const recentMatches = await this.listRecentMatches(userId);
     return {
       me: { ...user, email: null },
@@ -427,8 +429,8 @@ class PostgresRepository implements AppRepository {
 
   async requestFriend(requesterId: string, addresseeHandle: string): Promise<FriendSummary> {
     const addressee = await this.getUserByHandle(addresseeHandle);
-    if (!addressee) throw new Error("friend not found");
-    if (requesterId === addressee.id) throw new Error("cannot friend yourself");
+    if (!addressee) throw new RepositoryError("not_found", "friend not found");
+    if (requesterId === addressee.id) throw new RepositoryError("self_friend_request", "cannot friend yourself");
     const result = await sql<{ id: string; status: FriendSummary["status"] }>`
       insert into friendships (requester_id, addressee_id, status)
       values (${requesterId}, ${addressee.id}, 'pending')
@@ -463,9 +465,10 @@ class PostgresRepository implements AppRepository {
       where id = ${friendshipId} and addressee_id = ${userId}
       returning id, status, requester_id
     `.execute(this.db);
-    const friendship = firstRow(result);
+    const friendship = result.rows[0];
+    if (!friendship) throw new RepositoryError("not_found", "friendship not found");
     const requester = await this.getUserById(friendship.requester_id);
-    if (!requester) throw new Error("friend not found");
+    if (!requester) throw new RepositoryError("not_found", "friend not found");
     return { id: friendship.id, status: friendship.status, user: requester };
   }
 
@@ -739,63 +742,75 @@ class PostgresRepository implements AppRepository {
   }
 
   async createTournament(input: { name: string; createdBy: string }): Promise<TournamentSummary> {
-    const result = await sql<TournamentRow>`
-      insert into tournaments (name, created_by, capacity)
-      values (${input.name}, ${input.createdBy}, 4)
-      returning *
-    `.execute(this.db);
-    await this.joinTournament(firstRow(result).id, input.createdBy);
+    // 생성과 생성자 참가를 한 트랜잭션으로 묶는다. 참가가 실패하면 참가자 0명인 토너먼트가 남지 않는다.
+    const tournamentId = await this.db.transaction().execute(async (transaction) => {
+      const result = await sql<TournamentRow>`
+        insert into tournaments (name, created_by, capacity)
+        values (${input.name}, ${input.createdBy}, 4)
+        returning *
+      `.execute(transaction);
+      const created = firstRow(result);
+      await this.addTournamentEntry(transaction, created.id, input.createdBy);
+      return created.id;
+    });
     const tournaments = await this.listTournaments();
-    return tournaments.find((item) => item.id === firstRow(result).id) ?? tournaments[0];
+    return tournaments.find((item) => item.id === tournamentId) ?? tournaments[0];
   }
 
   async joinTournament(tournamentId: string, userId: string): Promise<TournamentSummary> {
-    await this.db.transaction().execute(async (transaction) => {
-      const tournament = await sql<{ capacity: number }>`
-        select capacity
-        from tournaments
-        where id = ${tournamentId}
-        for update
-      `.execute(transaction);
-      const tournamentRow = firstRow(tournament);
-      const existing = await sql<{ id: string }>`
-        select id
-        from tournament_entries
-        where tournament_id = ${tournamentId} and user_id = ${userId}
-        limit 1
-      `.execute(transaction);
-      if (existing.rows[0]) return;
-
-      const entryState = await sql<{ count: number; next_seed: number }>`
-        select
-          count(*)::integer as count,
-          (coalesce(max(seed), 0) + 1)::integer as next_seed
-        from tournament_entries
-        where tournament_id = ${tournamentId}
-      `.execute(transaction);
-      const state = firstRow(entryState);
-      if (Number(state.count) >= Number(tournamentRow.capacity)) {
-        throw new Error("tournament full");
-      }
-
-      await sql`
-        insert into tournament_entries (tournament_id, user_id, seed)
-        values (${tournamentId}, ${userId}, ${state.next_seed})
-      `.execute(transaction);
-      const playerCount = Number(state.count) + 1;
-      if (playerCount >= Number(tournamentRow.capacity)) {
-        await sql`
-          update tournaments
-          set status = 'running'
-          where id = ${tournamentId}
-        `.execute(transaction);
-        await this.ensureTournamentBracket(tournamentId, transaction);
-      }
-    });
+    await this.db.transaction().execute((transaction) => this.addTournamentEntry(transaction, tournamentId, userId));
     const tournaments = await this.listTournaments();
     const found = tournaments.find((item) => item.id === tournamentId);
-    if (!found) throw new Error("tournament not found");
+    if (!found) throw new RepositoryError("not_found", "tournament not found");
     return found;
+  }
+
+  private async addTournamentEntry(
+    transaction: Transaction<Database>,
+    tournamentId: string,
+    userId: string
+  ): Promise<void> {
+    const tournament = await sql<{ capacity: number }>`
+      select capacity
+      from tournaments
+      where id = ${tournamentId}
+      for update
+    `.execute(transaction);
+    const tournamentRow = tournament.rows[0];
+    if (!tournamentRow) throw new RepositoryError("not_found", "tournament not found");
+    const existing = await sql<{ id: string }>`
+      select id
+      from tournament_entries
+      where tournament_id = ${tournamentId} and user_id = ${userId}
+      limit 1
+    `.execute(transaction);
+    if (existing.rows[0]) return;
+
+    const entryState = await sql<{ count: number; next_seed: number }>`
+      select
+        count(*)::integer as count,
+        (coalesce(max(seed), 0) + 1)::integer as next_seed
+      from tournament_entries
+      where tournament_id = ${tournamentId}
+    `.execute(transaction);
+    const state = firstRow(entryState);
+    if (Number(state.count) >= Number(tournamentRow.capacity)) {
+      throw new RepositoryError("tournament_full", "tournament full");
+    }
+
+    await sql`
+      insert into tournament_entries (tournament_id, user_id, seed)
+      values (${tournamentId}, ${userId}, ${state.next_seed})
+    `.execute(transaction);
+    const playerCount = Number(state.count) + 1;
+    if (playerCount >= Number(tournamentRow.capacity)) {
+      await sql`
+        update tournaments
+        set status = 'running'
+        where id = ${tournamentId}
+      `.execute(transaction);
+      await this.ensureTournamentBracket(tournamentId, transaction);
+    }
   }
 
   async getTournamentMatch(matchId: string): Promise<TournamentMatchRecord | null> {
@@ -839,11 +854,13 @@ class PostgresRepository implements AppRepository {
         where id = ${targetUserId}
         returning *
       `.execute(transaction);
+      const user = result.rows[0];
+      if (!user) throw new RepositoryError("not_found", "user not found");
       await sql`
         insert into admin_actions (actor_id, target_user_id, action, reason)
         values (${actorId}, ${targetUserId}, ${banned ? "ban" : "unban"}, ${reason})
       `.execute(transaction);
-      return toPublicUser(firstRow(result));
+      return toPublicUser(user);
     });
   }
 
@@ -1014,7 +1031,7 @@ class MemoryRepository implements AppRepository {
 
   async setUserRoleByHandle(handle: string, role: UserRole): Promise<PublicUser> {
     const user = [...this.users.values()].find((item) => item.handle === normalizeHandle(handle) && !item.is_npc);
-    if (!user) throw new Error("user not found");
+    if (!user) throw new RepositoryError("not_found", "user not found");
     user.role = role;
     return toPublicUser(user, true);
   }
@@ -1031,7 +1048,7 @@ class MemoryRepository implements AppRepository {
 
   async updateProfile(userId: string, input: { displayName?: string; avatarKey?: string }): Promise<SessionUser> {
     const user = this.users.get(userId);
-    if (!user) throw new Error("user not found");
+    if (!user) throw new RepositoryError("not_found", "user not found");
     user.display_name = input.displayName ?? user.display_name;
     user.avatar_key = input.avatarKey ?? user.avatar_key;
     return toSessionUser(user, true);
@@ -1064,7 +1081,7 @@ class MemoryRepository implements AppRepository {
 
   async getDashboard(userId: string): Promise<DashboardSummary> {
     const user = await this.getUserById(userId);
-    if (!user) throw new Error("user not found");
+    if (!user) throw new RepositoryError("not_found", "user not found");
     const recentMatches = await this.listRecentMatches(userId);
     return {
       me: { ...user, email: null },
@@ -1082,7 +1099,7 @@ class MemoryRepository implements AppRepository {
           ? friendship.addresseeId
           : friendship.requesterId;
         const otherUser = this.users.get(otherUserId);
-        if (!otherUser) throw new Error("friend not found");
+        if (!otherUser) throw new RepositoryError("not_found", "friend not found");
         return {
           id: friendship.id,
           status: friendship.status,
@@ -1093,8 +1110,8 @@ class MemoryRepository implements AppRepository {
 
   async requestFriend(requesterId: string, addresseeHandle: string): Promise<FriendSummary> {
     const user = await this.getUserByHandle(addresseeHandle);
-    if (!user) throw new Error("friend not found");
-    if (requesterId === user.id) throw new Error("cannot friend yourself");
+    if (!user) throw new RepositoryError("not_found", "friend not found");
+    if (requesterId === user.id) throw new RepositoryError("self_friend_request", "cannot friend yourself");
     const existing = this.friendships.find((friendship) =>
       (friendship.requesterId === requesterId && friendship.addresseeId === user.id)
       || (friendship.requesterId === user.id && friendship.addresseeId === requesterId)
@@ -1118,10 +1135,10 @@ class MemoryRepository implements AppRepository {
 
   async acceptFriend(userId: string, friendshipId: string): Promise<FriendSummary> {
     const friend = this.friendships.find((item) => item.id === friendshipId);
-    if (!friend || friend.addresseeId !== userId) throw new Error("friendship not found");
+    if (!friend || friend.addresseeId !== userId) throw new RepositoryError("not_found", "friendship not found");
     friend.status = "accepted";
     const requester = this.users.get(friend.requesterId);
-    if (!requester) throw new Error("friend not found");
+    if (!requester) throw new RepositoryError("not_found", "friend not found");
     return { id: friend.id, status: friend.status, user: toPublicUser(requester, true) };
   }
 
@@ -1241,7 +1258,7 @@ class MemoryRepository implements AppRepository {
 
   async createTournament(input: { name: string; createdBy: string }): Promise<TournamentSummary> {
     const creator = await this.getUserById(input.createdBy);
-    if (!creator) throw new Error("creator not found");
+    if (!creator) throw new RepositoryError("not_found", "creator not found");
     const tournament: TournamentSummary = {
       id: randomUUID(),
       name: input.name,
@@ -1260,11 +1277,11 @@ class MemoryRepository implements AppRepository {
   async joinTournament(tournamentId: string, userId: string): Promise<TournamentSummary> {
     const tournament = this.tournaments.find((item) => item.id === tournamentId);
     const rawUser = this.users.get(userId);
-    if (!tournament || !rawUser) throw new Error("tournament not found");
+    if (!tournament || !rawUser) throw new RepositoryError("not_found", "tournament not found");
     const user = toPublicUser(rawUser, true);
     const alreadyJoined = tournament.entries.some((entry) => entry.id === user.id);
     if (!alreadyJoined && tournament.entries.length >= tournament.capacity) {
-      throw new Error("tournament full");
+      throw new RepositoryError("tournament_full", "tournament full");
     }
     if (!alreadyJoined) {
       tournament.entries.push(user);
@@ -1307,7 +1324,7 @@ class MemoryRepository implements AppRepository {
 
   async setUserBan(actorId: string, targetUserId: string, banned: boolean, reason: string): Promise<PublicUser> {
     const user = this.users.get(targetUserId);
-    if (!user) throw new Error("user not found");
+    if (!user) throw new RepositoryError("not_found", "user not found");
     user.status = banned ? "banned" : "active";
     const actor = await this.getUserById(actorId);
     const target = toPublicUser(user, true);
