@@ -24,6 +24,7 @@
     "content:check": "node --import tsx scripts/validate-content.ts",
     "content:ready": "node --import tsx scripts/validate-content-readiness.ts",
     "test": "vitest run",
+    "test:functional": "vitest run --exclude src/docs/documentation.test.ts",
     "test:container": "node scripts/verify-container-runtime.mjs",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
@@ -31,7 +32,7 @@
     "test:e2e:production": "npm run build && playwright test --config=playwright.production.config.ts"
   },
   "dependencies": {
-    "next": "16.2.11",
+    "next": "16.3.8",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "simple-icons": "^16.18.1",
@@ -44,15 +45,20 @@
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
-    "@types/node": "^20",
+    "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.11",
+    "eslint-config-next": "16.3.8",
     "jsdom": "^27.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.0",
     "typescript": "^5",
-    "vitest": "^3.2.4"
+    "vitest": "^5.0.3"
+  },
+  "overrides": {
+    "basic-ftp": "^6.2.2",
+    "tmp": "^0.2.7",
+    "uuid": "^11.1.1"
   }
 }
