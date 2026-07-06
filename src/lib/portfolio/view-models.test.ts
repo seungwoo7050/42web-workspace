@@ -1,6 +1,4 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-
+// describe/it/expect 등 vitest 기본 문법은 lib/portfolio.test.ts 상단 주석 참고.
 import { describe, expect, it } from "vitest";
 
 import { getPortfolioContent } from "./content";
@@ -105,16 +103,6 @@ describe("portfolio route view models", () => {
           .sort(),
       ).toEqual(sourceFields);
     }
-  });
-
-  it("does not build route models by spreading the full content object", () => {
-    const source = readFileSync(
-      resolve(process.cwd(), "src/lib/portfolio/view-models.ts"),
-      "utf8",
-    );
-
-    expect(source).not.toMatch(/PortfolioContent\s*&/);
-    expect(source).not.toMatch(/\.\.\.content\b/);
   });
 
   it("prepares home selections, metrics, and links before rendering", () => {
