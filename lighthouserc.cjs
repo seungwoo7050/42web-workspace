@@ -55,7 +55,7 @@ module.exports = {
           { ...median, maxNumericValue: 200 },
         ],
       },
-      includePassedAssertions: true,
+      includePassedAssertions: false,
     },
   },
 };

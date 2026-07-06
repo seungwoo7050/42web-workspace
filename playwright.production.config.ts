@@ -6,14 +6,15 @@ export default defineConfig({
   expect: {
     timeout: 5_000,
   },
-  reporter: [["list"]],
+  reporter: [["list"], ["github"], ["html", { open: "never" }]],
   outputDir: "test-results",
   snapshotPathTemplate:
     "{testDir}/{testFilePath}-snapshots/{arg}-{projectName}{ext}",
   workers: 1,
   use: {
     baseURL: "http://localhost:3200",
-    trace: "on-first-retry",
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
   },
   webServer: {
     command: "npm run start:e2e",
