@@ -1,67 +1,103 @@
-name: CI
+name: ci
 
 on:
   push:
-  pull_request:
+    branches: ["**"]
+    paths-ignore: ["**/*.md"]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  verify:
+  check:
+    name: 린트/타입/콘텐츠 검사
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
+    timeout-minutes: 15
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
-
-      - name: Pin npm
-        run: npm install --global npm@11.16.0
-
-      - name: Verify toolchain
+      # lockfile은 packageManager의 npm으로 만든 것이라 러너 기본 npm 대신 같은 버전을 쓴다
+      - name: npm 버전 고정
         run: |
+          npm install --global npm@11.16.0
           node --version
           npm --version
+      - run: npm ci
+      - name: 운영 의존성 취약점 검사
+        run: npm audit --omit=dev --audit-level=high
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run content:check
 
-      - name: Install dependencies
-        run: npm ci
+  unit:
+    name: 단위 테스트
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: npm 버전 고정
+        run: npm install --global npm@11.16.0
+      - run: npm ci
+      - run: npm run test
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Validate content
-        run: npm run content:check
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Build and run production E2E tests
+  e2e:
+    name: 프로덕션 빌드·e2e·성능 예산
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: npm 버전 고정
+        run: npm install --global npm@11.16.0
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # test:e2e:ci가 프로덕션 빌드까지 한다. 아래 검사들은 빌드를 다시 하지 않으려고 같은 job에서 그 산출물을 쓴다
+      - name: 프로덕션 빌드와 e2e(@visual 제외)
         run: npm run test:e2e:ci
-
-      - name: Verify standalone output
+      - name: standalone 산출물 검사
         run: npm run build:verify
-
-      - name: Check route bundle budgets
+      - name: 경로별 번들 예산 검사
         run: npm run bundle:check
-
-      - name: Locate Playwright Chromium for Lighthouse
-        run: echo "CHROME_PATH=$(node -e 'process.stdout.write(require(\"playwright\").chromium.executablePath())')" >> "$GITHUB_ENV"
-
-      - name: Run production Lighthouse budgets
+      # 러너에 Chrome을 따로 받지 않고 Playwright가 받은 Chromium을 Lighthouse에 넘긴다
+      - name: Lighthouse용 Chromium 경로
+        run: echo "CHROME_PATH=$(node -e 'process.stdout.write(require("playwright").chromium.executablePath())')" >> "$GITHUB_ENV"
+      - name: Lighthouse 성능·접근성 예산
         run: npm run lighthouse:audit
+      - name: 실패하면 Playwright·Lighthouse 결과를 남긴다
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: |
+            playwright-report/
+            test-results/
+            .lighthouseci/
+          retention-days: 7
 
-      - name: Verify container runtime and public assets
+  container:
+    name: 컨테이너 이미지 검사
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      # 검사 스크립트는 Node 내장 모듈과 docker CLI만 쓰므로 npm ci가 필요 없다(의존성 설치는 Dockerfile 안에서 한다)
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: 이미지 빌드·비root 실행·경로와 공개 자산 응답 검사
         run: npm run test:container
