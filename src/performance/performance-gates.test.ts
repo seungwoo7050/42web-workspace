@@ -12,6 +12,10 @@ import {
 
 const require = createRequire(import.meta.url);
 const lighthouseConfig = require("../../lighthouserc.cjs");
+const projects = require("../../src/content/projects.json");
+const firstProjectId = projects.items.find(
+  (project: { enabled?: boolean }) => project.enabled !== false,
+).id;
 const packageJson = require("../../package.json");
 
 describe("production build pipeline", () => {
@@ -39,7 +43,7 @@ describe("production performance gates", () => {
     ]) {
       expect(urls).toContain(`http://localhost:3300/?view=${designId}`);
       expect(urls).toContain(
-        `http://localhost:3300/projects/example-project?view=${designId}`,
+        `http://localhost:3300/projects/${firstProjectId}?view=${designId}`,
       );
     }
   });

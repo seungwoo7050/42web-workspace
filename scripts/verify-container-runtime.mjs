@@ -161,9 +161,13 @@ try {
   }
 
   await verifyResponse(baseUrl, "/", "text/html");
+  const projects = JSON.parse(
+    await readFile(path.join(contentDirectory, "projects.json"), "utf8"),
+  );
+  const firstProject = projects.items.find((project) => project.enabled !== false);
   await verifyResponse(
     baseUrl,
-    "/projects/example-project?view=classic",
+    `/projects/${firstProject.id}?view=classic`,
     "text/html",
   );
 

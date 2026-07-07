@@ -65,13 +65,13 @@ describe("route metadata", () => {
       expect.objectContaining({
         alternates: { canonical: "/journey" },
         description: "A chronological view of the work.",
-        title: "Journey | Your Name",
+        title: `Journey | ${siteJson.brand}`,
       }),
     );
     expect(metadata.openGraph).toEqual(
       expect.objectContaining({
         description: "A chronological view of the work.",
-        title: "Journey | Your Name",
+        title: `Journey | ${siteJson.brand}`,
         url: "/journey",
       }),
     );

@@ -55,6 +55,26 @@ function replaceTemplateMarkers(value: unknown): unknown {
   return value;
 }
 
+function createTemplateLikeContent() {
+  const content = structuredClone(loadPortfolioSource());
+
+  content.site.socialImage = undefined;
+  content.profile.name = "Your Name";
+  content.profile.photo = {
+    src: "/template/profile/portrait-placeholder.svg",
+    alt: "Portrait placeholder",
+  };
+  content.links[0] = { ...content.links[0], href: "https://github.com/your-handle" };
+  content.resume.downloadUrl = null;
+  content.projects.items[0].screenshot.src =
+    "/template/profile/portrait-placeholder.svg";
+  content.projects.items[0].links = content.projects.items[0].links.map(
+    (link) => ({ ...link, enabled: false }),
+  );
+
+  return content;
+}
+
 function createProductionReadyContent() {
   const content = replaceTemplateMarkers(
     structuredClone(loadPortfolioSource()),
@@ -97,7 +117,7 @@ describe("portfolio production readiness", () => {
 
   it("reports every production input category without masking later issues", () => {
     const error = captureReadinessError(() =>
-      validateBuildReadiness(loadPortfolioSource(), {
+      validateBuildReadiness(createTemplateLikeContent(), {
         PORTFOLIO_CONTENT_MODE: "production",
       }),
     );
