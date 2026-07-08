@@ -131,6 +131,7 @@
   display: flex;
   align-items: stretch;
   border-inline: 1px solid var(--hairline);
+  container-type: inline-size;
 }
 
 .navLink {
@@ -160,6 +161,19 @@
 .navLink:hover {
   background: var(--ink);
   color: var(--paper);
+}
+
+/* 긴 이름이 왼쪽 칸을 차지하면 화면이 넓어도 메뉴 칸이 링크 7개의 최소 폭보다 좁아져 마지막 링크가 칸 밖으로 밀린다.
+   화면 폭이 아니라 메뉴 칸 폭을 기준으로 1180px 이하와 같은 압축 메뉴를 쓴다 */
+@container (max-width: 660px) {
+  .navLink {
+    min-width: 0;
+    padding-inline: 9px;
+  }
+
+  .navLink span {
+    display: none;
+  }
 }
 
 .switcherSlot {
