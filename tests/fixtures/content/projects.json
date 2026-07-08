@@ -1,0 +1,261 @@
+{
+  "groups": [
+    {
+      "id": "featured-work",
+      "label": "Featured Work",
+      "description": "A small selection of projects that best represents your approach and capabilities.",
+      "order": 0
+    }
+  ],
+  "metrics": [
+    {
+      "id": "projectCount",
+      "label": "Projects",
+      "description": "All visible projects.",
+      "aggregate": "projects"
+    },
+    {
+      "id": "productCount",
+      "label": "Products",
+      "description": "Projects in the featured work group.",
+      "aggregate": "projects",
+      "filter": {
+        "groupIds": [
+          "featured-work"
+        ]
+      }
+    },
+    {
+      "id": "curriculumCount",
+      "label": "Archive",
+      "description": "Non-featured learning projects.",
+      "aggregate": "projects",
+      "filter": {
+        "featured": false
+      }
+    },
+    {
+      "id": "reliabilityCount",
+      "label": "Reliability",
+      "description": "Archived reliability exercises.",
+      "aggregate": "projects",
+      "filter": {
+        "deploymentStatuses": [
+          "archived"
+        ]
+      }
+    },
+    {
+      "id": "sourceOnlyCount",
+      "label": "Source only",
+      "description": "Projects published as source code only.",
+      "aggregate": "projects",
+      "filter": {
+        "deploymentStatuses": [
+          "source-only"
+        ]
+      }
+    }
+  ],
+  "items": [
+    {
+      "id": "visual-sample",
+      "order": "01",
+      "title": "아주 긴 프로젝트 제목이 카드와 상세 화면에서 여러 줄로 줄바꿈되는 경우 — An Exceptionally Long Project Title",
+      "groupId": "featured-work",
+      "tags": [
+        "product",
+        "web-app"
+      ],
+      "featured": true,
+      "enabled": true,
+      "period": "2026",
+      "role": "Product designer and developer",
+      "summary": "사용자의 문제를 끝까지 따라가 설계하고, 검증할 수 있는 인터페이스로 마무리하는 제품 디자이너이자 개발자입니다. 긴 한국어 문장이 여러 줄로 나뉘어도 레이아웃이 무너지지 않아야 합니다.",
+      "description": "Replace this starter project with a real case study. Describe the context, your contribution, and why the work mattered.",
+      "deployment": {
+        "status": "case-study-only",
+        "label": "Case study",
+        "showBadge": true
+      },
+      "screenshot": {
+        "src": "/content/visual-fixture/screenshot.svg",
+        "alt": "visual-sample 대표 이미지"
+      },
+      "screenshots": [],
+      "stack": [
+        "typescript",
+        "react",
+        "nextjs",
+        "playwright"
+      ],
+      "links": [
+        {
+          "id": "example-source",
+          "type": "source",
+          "label": "Source placeholder",
+          "href": "https://github.com/your-handle/visual-sample",
+          "external": true,
+          "enabled": false,
+          "placements": [
+            "card",
+            "detail"
+          ]
+        }
+      ],
+      "highlights": [
+        "Clarified the core user journey and reduced the interface to the essential steps.",
+        "Built a reusable component system with responsive and keyboard-friendly states.",
+        "Documented the main technical decisions and verification path."
+      ],
+      "problem": "The initial workflow was fragmented, making the primary task difficult to discover and complete.",
+      "solution": "A focused information architecture and reusable interface system turned the workflow into a clear sequence.",
+      "architecture": {
+        "summary": "A content-driven Next.js interface with typed boundaries and reusable presentation components.",
+        "items": [
+          "Structured content as validated data rather than page-level hardcoded copy.",
+          "Separated route data from visual presentation so multiple designs can share one source.",
+          "Added automated checks for the primary user paths."
+        ]
+      },
+      "decisions": [
+        "Kept project content independent from presentation-specific markup.",
+        "Used one canonical project identifier across resume, journey, curation, and interview references."
+      ],
+      "tradeoffs": [
+        "The starter uses placeholder artwork so adopters must add authentic project evidence.",
+        "A compact example is easier to understand but does not demonstrate every optional content pattern."
+      ],
+      "results": [
+        "A complete example route that renders in all five visual templates.",
+        "A safe reference for adding more projects without breaking cross-file links."
+      ]
+    },
+    {
+      "id": "visual-second",
+      "order": "02",
+      "title": "Short",
+      "groupId": "featured-work",
+      "tags": [
+        "product",
+        "web-app"
+      ],
+      "featured": true,
+      "enabled": true,
+      "period": "2026",
+      "role": "Product designer and developer",
+      "summary": "짧은 요약.",
+      "description": "Replace this starter project with a real case study. Describe the context, your contribution, and why the work mattered.",
+      "deployment": {
+        "status": "live",
+        "label": "Live",
+        "showBadge": true
+      },
+      "screenshot": {
+        "src": "/content/visual-fixture/screenshot.svg",
+        "alt": "visual-second 대표 이미지"
+      },
+      "screenshots": [
+        {
+          "src": "/content/visual-fixture/screenshot.svg",
+          "alt": "visual-second 상세 이미지 1"
+        },
+        {
+          "src": "/content/visual-fixture/screenshot.svg",
+          "alt": "visual-second 상세 이미지 2"
+        }
+      ],
+      "stack": [
+        "typescript"
+      ],
+      "links": [],
+      "highlights": [
+        "Clarified the core user journey and reduced the interface to the essential steps.",
+        "Built a reusable component system with responsive and keyboard-friendly states.",
+        "Documented the main technical decisions and verification path."
+      ],
+      "problem": "The initial workflow was fragmented, making the primary task difficult to discover and complete.",
+      "solution": "A focused information architecture and reusable interface system turned the workflow into a clear sequence.",
+      "architecture": {
+        "summary": "A content-driven Next.js interface with typed boundaries and reusable presentation components.",
+        "items": [
+          "Structured content as validated data rather than page-level hardcoded copy.",
+          "Separated route data from visual presentation so multiple designs can share one source.",
+          "Added automated checks for the primary user paths."
+        ]
+      },
+      "decisions": [
+        "Kept project content independent from presentation-specific markup.",
+        "Used one canonical project identifier across resume, journey, curation, and interview references."
+      ],
+      "tradeoffs": [
+        "The starter uses placeholder artwork so adopters must add authentic project evidence.",
+        "A compact example is easier to understand but does not demonstrate every optional content pattern."
+      ],
+      "results": [
+        "A complete example route that renders in all five visual templates.",
+        "A safe reference for adding more projects without breaking cross-file links."
+      ]
+    },
+    {
+      "id": "visual-archive",
+      "order": "03",
+      "title": "보관된 학습 프로젝트",
+      "groupId": "featured-work",
+      "tags": [
+        "product",
+        "web-app"
+      ],
+      "featured": false,
+      "enabled": true,
+      "period": "2026",
+      "role": "Product designer and developer",
+      "summary": "A neutral case study showing where to describe a project's purpose and strongest outcome.",
+      "description": "Replace this starter project with a real case study. Describe the context, your contribution, and why the work mattered.",
+      "deployment": {
+        "status": "archived",
+        "label": "Archived",
+        "showBadge": true
+      },
+      "screenshot": {
+        "src": "/content/visual-fixture/screenshot.svg",
+        "alt": "visual-archive 대표 이미지"
+      },
+      "screenshots": [],
+      "stack": [
+        "typescript",
+        "react",
+        "nextjs",
+        "playwright"
+      ],
+      "links": [],
+      "highlights": [
+        "Clarified the core user journey and reduced the interface to the essential steps.",
+        "Built a reusable component system with responsive and keyboard-friendly states.",
+        "Documented the main technical decisions and verification path."
+      ],
+      "problem": "The initial workflow was fragmented, making the primary task difficult to discover and complete.",
+      "solution": "A focused information architecture and reusable interface system turned the workflow into a clear sequence.",
+      "architecture": {
+        "summary": "A content-driven Next.js interface with typed boundaries and reusable presentation components.",
+        "items": [
+          "Structured content as validated data rather than page-level hardcoded copy.",
+          "Separated route data from visual presentation so multiple designs can share one source.",
+          "Added automated checks for the primary user paths."
+        ]
+      },
+      "decisions": [
+        "Kept project content independent from presentation-specific markup.",
+        "Used one canonical project identifier across resume, journey, curation, and interview references."
+      ],
+      "tradeoffs": [
+        "The starter uses placeholder artwork so adopters must add authentic project evidence.",
+        "A compact example is easier to understand but does not demonstrate every optional content pattern."
+      ],
+      "results": [
+        "A complete example route that renders in all five visual templates.",
+        "A safe reference for adding more projects without breaking cross-file links."
+      ]
+    }
+  ]
+}

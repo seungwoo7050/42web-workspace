@@ -1,0 +1,13 @@
+{
+  "title": "Contact",
+  "intro": "Use the links below to start a conversation about a role, project, or collaboration.",
+  "availability": "Available for selected product design and development opportunities.",
+  "preferred": [
+    "github",
+    "resume"
+  ],
+  "notes": [
+    "Replace the placeholder URLs in links.json with your own public profiles.",
+    "Enable the email link after replacing hello@example.com with your address."
+  ]
+}

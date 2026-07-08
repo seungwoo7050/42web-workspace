@@ -1,0 +1,547 @@
+{
+  "defaultHomeTemplate": "editorial",
+  "templates": [
+    {
+      "id": "design",
+      "label": "Design",
+      "description": "A polished product case-study presentation with visual evidence."
+    },
+    {
+      "id": "classic",
+      "label": "Classic",
+      "description": "A compact terminal-led portfolio with an indexed archive."
+    },
+    {
+      "id": "editorial",
+      "label": "Editorial",
+      "description": "An asymmetric print folio with evidence-led case-study spreads."
+    },
+    {
+      "id": "brutalist",
+      "label": "Brutalist",
+      "description": "An oversized modular grid with hard, expressive contrast."
+    },
+    {
+      "id": "cinematic",
+      "label": "Cinematic",
+      "description": "A quiet image-led archive arranged as visual chapters."
+    }
+  ],
+  "ui": {
+    "debugPrefix": "Content",
+    "skipLinkLabel": "Skip to content",
+    "primaryNavigationAriaLabel": "Primary navigation",
+    "mobileNavigationAriaLabel": "Mobile navigation",
+    "menuLabel": "Menu",
+    "designSwitcherAriaTemplate": "Change site design. Current design: {label}",
+    "designSwitcherCountTemplate": "Design {index}/{total}",
+    "designSwitcherCloseLabel": "Close design selector",
+    "designNavigationAriaLabel": "Site design",
+    "journeyCaseStudyLabel": "Case study",
+    "techMarqueeAriaLabel": "Technology stack marquee",
+    "animatedTerminalAriaLabel": "Animated portfolio terminal preview",
+    "projectNavigationAriaLabel": "Project navigation",
+    "readCaseStudyAriaTemplate": "Read {title} case study",
+    "openItemAriaTemplate": "Open {title}",
+    "nowLabel": "Now",
+    "emptyStates": {
+      "projectsHome": "Project entries will appear here.",
+      "projectsArchive": "No public projects are configured yet.",
+      "journey": "Journey entries will appear here.",
+      "projectDetails": "Details are being prepared.",
+      "noMappedEvidence": "No mapped evidence yet.",
+      "additionalNotes": "No additional notes supplied.",
+      "contactLinks": "No contact links are configured."
+    }
+  },
+  "editorial": {
+    "shell": {
+      "kicker": "Independent portfolio",
+      "volumeLabel": "Vol."
+    }
+  },
+  "brutalist": {
+    "shell": {
+      "debugLabel": "Content mode",
+      "debugHint": "Editable source: src/content/** + public/content/**"
+    }
+  },
+  "cinematic": {
+    "shell": {
+      "brandSubtitle": "Visual archive"
+    }
+  },
+  "home": {
+    "design": {
+      "hero": {
+        "primaryActionLabel": "View projects",
+        "leadLabel": "Lead case study",
+        "leadActionLabel": "Open case study",
+        "stats": [
+          {
+            "label": "Products",
+            "countKey": "productCount"
+          },
+          {
+            "label": "Archive",
+            "countKey": "curriculumCount"
+          },
+          {
+            "label": "Reliability",
+            "countKey": "reliabilityCount"
+          }
+        ]
+      },
+      "sections": [
+        "featured",
+        "workMap",
+        "technicalFocus",
+        "stack",
+        "journey",
+        "contact"
+      ],
+      "featured": {
+        "title": "Selected work",
+        "body": "Start with the projects that best demonstrate your judgment, craft, and contribution.",
+        "actionLabel": "View all projects"
+      }
+    },
+    "classic": {
+      "hero": {
+        "primaryActionLabel": "View projects"
+      },
+      "sections": [
+        "featured",
+        "workMap",
+        "technicalFocus",
+        "stack",
+        "journey",
+        "contact"
+      ],
+      "featured": {
+        "title": "Selected work",
+        "body": "A concise index of your strongest project evidence and technical decisions.",
+        "actionLabel": "View all projects"
+      },
+      "terminal": {
+        "title": "portfolio.sh",
+        "bootLine": "portfolio ready · content loaded",
+        "promptUser": "your-handle",
+        "promptPath": "~/portfolio",
+        "commands": [
+          {
+            "command": "whoami",
+            "output": [
+              "{handle} / {role}",
+              "{location} · open to opportunities"
+            ]
+          },
+          {
+            "command": "projects --featured",
+            "output": [
+              "{projectCount} project indexed from content",
+              "case studies · decisions · outcomes"
+            ]
+          },
+          {
+            "command": "stack --focus",
+            "output": [
+              "{stackCount} tools mapped",
+              "TypeScript · React · Next.js"
+            ]
+          },
+          {
+            "command": "contact --signal",
+            "output": [
+              "availability published",
+              "response route: /contact"
+            ]
+          }
+        ]
+      }
+    },
+    "editorial": {
+      "sections": [
+        "hero",
+        "lead",
+        "featured",
+        "principles",
+        "contact"
+      ],
+      "hero": {
+        "issueTemplate": "Portfolio / {year}",
+        "primaryActionLabel": "Browse the complete project index"
+      },
+      "lead": {
+        "label": "Cover story",
+        "actionLabel": "Read the case study"
+      },
+      "featured": {
+        "title": "Selected stories"
+      },
+      "current": {
+        "actionLabel": "Follow the journey"
+      }
+    },
+    "brutalist": {
+      "sections": [
+        "hero",
+        "signal",
+        "featured",
+        "system",
+        "journey",
+        "contact"
+      ],
+      "stampLabel": "Portfolio",
+      "signalText": "Build / Prove / Ship / Question /",
+      "hero": {
+        "primaryActionLabel": "View the work",
+        "secondaryActionLabel": "Contact"
+      },
+      "featured": {
+        "title": "Selected work",
+        "body": "A numbered index of the projects that best explain the work.",
+        "actionLabel": "All projects"
+      },
+      "system": {
+        "title": "Working system",
+        "body": "The constraints used to keep code, decisions, and evidence inspectable."
+      },
+      "journeyActionLabel": "Open full journey",
+      "contactActionLabel": "Open contact"
+    },
+    "cinematic": {
+      "sections": [
+        "hero",
+        "statement",
+        "projects",
+        "focusContact"
+      ],
+      "hero": {
+        "primaryActionLabel": "View the archive",
+        "secondaryActionLabel": "Start a conversation"
+      },
+      "statementLabel": "Selected work",
+      "focusLabel": "Focus",
+      "contactActionLabel": "Contact",
+      "caseStudyActionLabel": "Enter case study"
+    },
+    "shared": {
+      "workMap": {
+        "title": "Work map",
+        "body": "Group the portfolio into a few meaningful tracks instead of treating every project as equal.",
+        "cards": [
+          {
+            "id": "product",
+            "label": "Product case studies",
+            "body": "Complete stories covering context, decisions, implementation, and outcomes.",
+            "countKey": "productCount"
+          },
+          {
+            "id": "archive",
+            "label": "Learning archive",
+            "body": "Smaller exercises that support your technical foundation.",
+            "countKey": "curriculumCount"
+          },
+          {
+            "id": "reliability",
+            "label": "Reliability practice",
+            "body": "Work that demonstrates testing, failure handling, and operational thinking.",
+            "countKey": "reliabilityCount"
+          }
+        ]
+      },
+      "technicalFocus": {
+        "title": "Technical focus",
+        "body": "Describe the few technical themes that consistently shape how you work."
+      },
+      "stack": {
+        "title": "Languages, frameworks, and tools",
+        "body": "List technologies you can support with concrete project evidence."
+      },
+      "journey": {
+        "title": "Journey",
+        "body": "Connect projects and milestones through the decisions that moved your work forward."
+      },
+      "contact": {
+        "actionLabel": "Contact page",
+        "title": "Start a conversation"
+      }
+    }
+  },
+  "pages": {
+    "projects": {
+      "groups": [
+        {
+          "category": "Featured Work",
+          "body": "A small selection of projects that best represents your approach and capabilities."
+        }
+      ],
+      "design": {
+        "hero": {
+          "title": "Projects",
+          "body": "Browse selected work by problem, contribution, technical decisions, and outcomes.",
+          "stats": {
+            "visibleEntries": "visible entries",
+            "archive": "archive entries",
+            "sourceFirst": "source-first"
+          }
+        },
+        "featured": {
+          "eyebrow": "Featured",
+          "title": "Lead projects",
+          "body": "Begin with the projects that offer the clearest evidence of your role and judgment."
+        },
+        "group": {
+          "countLabel": "projects"
+        }
+      },
+      "classic": {
+        "hero": {
+          "eyebrow": "portfolio/projects.index",
+          "title": "Project archive",
+          "body": "An indexed view of selected case studies and supporting work.",
+          "stats": [
+            {
+              "label": "Entries",
+              "countKey": "projectCount"
+            },
+            {
+              "label": "Archive",
+              "countKey": "curriculumCount"
+            },
+            {
+              "label": "Source-first",
+              "countKey": "sourceOnlyCount"
+            }
+          ]
+        },
+        "terminal": {
+          "ariaLabel": "Classic project archive terminal",
+          "title": "projects.index",
+          "promptUser": "your-handle",
+          "promptPath": "~/portfolio",
+          "command": "projects --grouped --public",
+          "entryLabel": "entries",
+          "maxGroups": 5
+        },
+        "selected": {
+          "eyebrow": "Selected work",
+          "title": "Representative case",
+          "body": "A lead project appears first, followed by a compact grouped index."
+        },
+        "grouped": {
+          "eyebrow": "Archive tracks",
+          "title": "Grouped index",
+          "body": "Compare related projects within a shared problem area.",
+          "countLabel": "projects"
+        }
+      },
+      "editorial": {
+        "hero": {
+          "title": "Project index",
+          "body": "Browse the complete body of work as an editorial archive."
+        },
+        "archiveAriaLabel": "Project archive summary",
+        "groupKickerTemplate": "Chapter {number}"
+      },
+      "brutalist": {
+        "hero": {
+          "eyebrow": "Project archive",
+          "title": "Projects",
+          "body": "Browse selected work by problem, contribution, technical decisions, and outcomes."
+        }
+      },
+      "cinematic": {
+        "hero": {
+          "eyebrow": "Archive",
+          "entryLabel": "entries",
+          "title": "Projects as chapters, not thumbnails.",
+          "body": "Move through the work as a sequence of visual case studies."
+        }
+      }
+    },
+    "projectDetail": {
+      "backLabel": "Projects",
+      "caseLabel": "Case",
+      "missing": {
+        "eyebrow": "404 / Case file",
+        "title": "Project unavailable",
+        "body": "This project is not part of the current public content set.",
+        "actionLabel": "Return to projects"
+      },
+      "facts": {
+        "roleLabel": "Role",
+        "statusLabel": "Status"
+      },
+      "outroLabel": "End of case file",
+      "returnToIndexLabel": "Return to project index",
+      "frameLabel": "Frame",
+      "editorial": {
+        "decisionSpreadTitle": "Decision record"
+      },
+      "sections": {
+        "problem": {
+          "eyebrow": "Problem",
+          "title": "Problem statement"
+        },
+        "solution": {
+          "eyebrow": "Solution",
+          "title": "Solution summary"
+        },
+        "architecture": {
+          "eyebrow": "Architecture",
+          "title": "Architecture"
+        },
+        "screenshots": {
+          "eyebrow": "Evidence",
+          "title": "Gallery"
+        },
+        "stack": {
+          "eyebrow": "Stack",
+          "title": "Technology"
+        },
+        "decisions": {
+          "eyebrow": "Decisions",
+          "title": "Key decisions"
+        },
+        "highlights": {
+          "eyebrow": "Highlights",
+          "title": "Project highlights"
+        },
+        "tradeoffs": {
+          "eyebrow": "Tradeoffs",
+          "title": "Constraints and tradeoffs"
+        },
+        "result": {
+          "eyebrow": "Result",
+          "title": "Outcomes"
+        }
+      }
+    },
+    "about": {
+      "hero": {
+        "title": "About"
+      },
+      "principles": {
+        "title": "Working principles"
+      },
+      "journey": {
+        "title": "Experience"
+      },
+      "skills": {
+        "title": "Skills"
+      },
+      "curation": {
+        "title": "Curation rationale",
+        "body": "Explain what the portfolio includes, what it leaves out, and why.",
+        "criteriaTitle": "Selection criteria",
+        "categoriesTitle": "Portfolio categories",
+        "omissionsTitle": "Not represented yet",
+        "nextReviewTitle": "Next review"
+      },
+      "editorial": {
+        "heroEyebrowTemplate": "Profile / {handle}",
+        "curationEyebrow": "Editorial policy"
+      },
+      "brutalist": {
+        "heroEyebrowTemplate": "{handle} / Profile",
+        "principleItemLabel": "Rule",
+        "focusItemLabel": "Focus"
+      }
+    },
+    "journey": {
+      "hero": {
+        "title": "Journey",
+        "eyebrow": "Timeline narrative"
+      },
+      "narrative": {
+        "title": "Decision milestones",
+        "body": "Explain the state before each decision, why you chose a direction, and what changed afterward.",
+        "labels": {
+          "state": "State",
+          "reason": "Reason",
+          "result": "Result"
+        }
+      },
+      "timeline": {
+        "title": "Timeline",
+        "body": "A chronological view of projects, roles, education, and learning milestones."
+      },
+      "now": {
+        "title": "Current direction",
+        "anchorLabel": "Related case study"
+      }
+    },
+    "interviewMap": {
+      "hero": {
+        "title": "Interview Map",
+        "eyebrow": "Evidence reference"
+      },
+      "tracks": {
+        "title": "Topics and evidence",
+        "answerLabel": "Supporting project",
+        "depthLabel": "What the evidence covers",
+        "referenceLabel": "Reference",
+        "emptyLabel": "No mapped evidence yet.",
+        "indexLabel": "Track index",
+        "itemCountTemplate": "{count} items",
+        "questionLabel": "Interview topic"
+      },
+      "gaps": {
+        "ariaLabel": "Topics that need stronger evidence",
+        "eyebrow": "Appendix"
+      }
+    },
+    "resume": {
+      "hero": {
+        "title": "Resume",
+        "body": "A concise overview of your profile, selected work, training, and education.",
+        "downloadLabel": "Download PDF"
+      },
+      "summary": {
+        "title": "Summary"
+      },
+      "projects": {
+        "title": "Selected project experience",
+        "caseStudyLabel": "Case study"
+      },
+      "training": {
+        "title": "Training and education"
+      },
+      "experience": {
+        "title": "Experience"
+      },
+      "education": {
+        "title": "Education"
+      },
+      "notes": {
+        "title": "Notes / Read me"
+      },
+      "identity": {
+        "locationLabel": "Location",
+        "availabilityLabel": "Availability"
+      },
+      "editorial": {
+        "heroEyebrow": "Curriculum vitae"
+      },
+      "brutalist": {
+        "heroEyebrowTemplate": "{name} / CV"
+      }
+    },
+    "contact": {
+      "availability": {
+        "title": "Availability"
+      },
+      "notes": {
+        "title": "Contact notes"
+      },
+      "editorial": {
+        "heroEyebrowTemplate": "Correspondence / {location}"
+      },
+      "brutalist": {
+        "heroEyebrow": "Open channel"
+      }
+    }
+  }
+}
