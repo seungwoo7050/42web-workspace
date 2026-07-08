@@ -137,6 +137,9 @@ a:hover .media img { filter: saturate(1); transform: scale(1.025); }
 .gapsSection ul { display: grid; gap: 0; list-style: none; margin: 0; padding: 0; }
 .gapsSection li { border-top: 1px solid rgba(217,210,196,.16); color: var(--muted); line-height: 1.7; padding: 1.25rem 0; }
 
+/* 한글은 글자 상자를 꽉 채워서 라틴 문자용 1 미만 줄 간격에서 윗줄과 아랫줄이 겹친다 */
+.hero h1:lang(ko),.indexHero h1:lang(ko),.textHero h1:lang(ko),.contactHero h1:lang(ko),.caseHero h1:lang(ko),.stickyCopy h2:lang(ko),.sectionHeading h2:lang(ko),.currentChapter h2:lang(ko),.statement>p:lang(ko) { line-height: 1.08; }
+
 @media (max-width: 980px) {
   .header { grid-template-columns: minmax(0,1fr) auto auto; padding: .75rem 1rem; }
   .desktopNav { display: none; }
