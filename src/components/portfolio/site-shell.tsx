@@ -39,6 +39,7 @@ export function SiteHeader({
     <header
       className="sticky top-0 z-30 border-b border-line/90 bg-background/88 backdrop-blur"
       data-site-header
+      data-visual="header"
     >
       <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-2 sm:px-8">
         <Link
@@ -124,7 +125,7 @@ export function SiteFooter({
   site: SiteContent;
 }) {
   return (
-    <footer className="border-t border-line bg-background">
+    <footer className="border-t border-line bg-background" data-visual="footer">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8">
         <p>{site.footer.note}</p>
         <Link

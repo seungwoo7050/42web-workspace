@@ -167,7 +167,7 @@ function HeroSection({
   const supportingProjects = projects.slice(1, 3);
 
   return (
-    <section className="hero-section border-b border-line">
+    <section className="hero-section border-b border-line" data-visual="hero">
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 sm:px-8 md:py-16 lg:min-h-[calc(88vh-4rem)] lg:grid-cols-[0.86fr_1.14fr] lg:items-center">
         <Reveal className="max-w-3xl">
           <ContentHint

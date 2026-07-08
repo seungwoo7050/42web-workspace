@@ -114,7 +114,7 @@ function Frame({
       <a className={styles.skipLink} href="#cinematic-content">
         {ui.skipLinkLabel}
       </a>
-      <header className={styles.header}>
+      <header className={styles.header} data-visual="header">
         <Link
           className={styles.brand}
           href={routeHref("/", contentDebug)}
@@ -164,7 +164,7 @@ function Frame({
       <main id="cinematic-content" tabIndex={-1}>
         {children}
       </main>
-      <footer className={styles.footer}>
+      <footer className={styles.footer} data-visual="footer">
         <p>{content.site.footer.note}</p>
         {footerLinks.length > 0 ? (
           <LinkList contentDebug={contentDebug} links={footerLinks} />
@@ -216,7 +216,7 @@ function ProjectChapter({
   project: PortfolioProject;
 }) {
   return (
-    <article className={styles.projectChapter}>
+    <article className={styles.projectChapter} data-visual="project-card">
       <div className={styles.stickyCopy}>
         <ChapterLabel index={index}>{project.category}</ChapterLabel>
         <h2>{project.title}</h2>
@@ -248,7 +248,7 @@ function HomeView({ content, contentDebug }: DesignRouteProps) {
   const ui = content.presentation.ui;
   const sectionNodes: Record<(typeof copy.sections)[number], React.ReactNode> = {
     hero: (
-      <section className={styles.hero}>
+      <section className={styles.hero} data-visual="hero">
         <div className={styles.heroCopy}>
           <p className={styles.kicker}>{content.profile.name} · {content.profile.location}</p>
           <h1>{content.profile.role}</h1>
@@ -386,7 +386,7 @@ function ProjectDetailView({ content, contentDebug, project }: DesignRouteProps)
 
   return (
     <article className={styles.caseStudy}>
-      <header className={styles.caseHero}>
+      <header className={styles.caseHero} data-visual="project-hero">
         <Link href={routeHref("/projects", contentDebug)} prefetch={false}>
           ← {copy.backLabel}
         </Link>

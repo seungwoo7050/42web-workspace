@@ -202,7 +202,7 @@ function BrutalistShell({
       <a className={styles.skipLink} href="#brutalist-main">
         {ui.skipLinkLabel}
       </a>
-      <header className={styles.header}>
+      <header className={styles.header} data-visual="header">
         <div className={styles.headerBar}>
           <Link
             className={styles.brand}
@@ -284,7 +284,7 @@ function BrutalistShell({
       <main className={styles.main} id="brutalist-main" tabIndex={-1}>
         {children}
       </main>
-      <footer className={styles.footer}>
+      <footer className={styles.footer} data-visual="footer">
         <div className={styles.footerLead}>
           <span className={styles.footerSymbol} aria-hidden="true">
             ↳
@@ -330,7 +330,7 @@ function HomeView({
         switch (section) {
           case "hero":
             return (
-              <section className={styles.homeHero} key={section}>
+              <section className={styles.homeHero} data-visual="hero" key={section}>
                 <div className={styles.heroStamp}>
                   <span>
                     {homeCopy.stampLabel} / {viewModel.currentYear}
@@ -532,7 +532,7 @@ function ProjectIndexRow({
   project: PortfolioProject;
 }) {
   return (
-    <li className={styles.projectIndexItem}>
+    <li className={styles.projectIndexItem} data-visual="project-card">
       <Link href={brutalistHref(`/projects/${project.id}`, contentDebug)}>
         <span className={styles.projectIndexNumber}>
           {project.order}
@@ -652,7 +652,7 @@ function ProjectDetailView({
   return (
     <>
       <article>
-        <header className={styles.detailHero}>
+        <header className={styles.detailHero} data-visual="project-hero">
           <div className={styles.detailHeroCopy}>
             <Link
               className={styles.backLink}

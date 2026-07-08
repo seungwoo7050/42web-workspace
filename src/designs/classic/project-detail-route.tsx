@@ -61,7 +61,7 @@ function ProjectHero({
   project: PortfolioProject;
 }) {
   return (
-    <section className="border-b border-line">
+    <section className="border-b border-line" data-visual="project-hero">
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-16 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
         <div>
           <Link

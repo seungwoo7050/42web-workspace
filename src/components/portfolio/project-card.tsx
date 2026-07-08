@@ -31,6 +31,7 @@ export function ProjectCard({
 
   return (
     <article
+      data-visual="project-card"
       className={`project-card motion-card group grid gap-5 rounded-lg border border-line bg-surface p-3 transition duration-300 hover:border-accent/50 hover:bg-surface-hover ${
         isFeatured ? "lg:grid-cols-[1.15fr_0.85fr] lg:items-stretch" : ""
       }`}

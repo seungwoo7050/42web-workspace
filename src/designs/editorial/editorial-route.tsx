@@ -175,7 +175,7 @@ function EditorialShell({
       <a className={styles.skipLink} href="#editorial-main">
         {ui.skipLinkLabel}
       </a>
-      <header className={styles.masthead}>
+      <header className={styles.masthead} data-visual="header">
         <div className={styles.mastheadRule}>
           <span>{shellCopy.kicker}</span>
           <span aria-hidden="true">{shellCopy.volumeLabel} {routeNumbers[route]}</span>
@@ -240,7 +240,7 @@ function EditorialShell({
       <main id="editorial-main" tabIndex={-1}>
         {children}
       </main>
-      <footer className={styles.footer}>
+      <footer className={styles.footer} data-visual="footer">
         <div className={styles.footerLead}>
           <p>{content.site.footer.note}</p>
           {footerLinks.map((link) => (
@@ -285,7 +285,7 @@ function ProjectIndexItem({
   const tags = getProjectTags(project);
 
   return (
-    <article className={styles.projectIndexItem}>
+    <article className={styles.projectIndexItem} data-visual="project-card">
       <span className={styles.projectOrdinal}>{project.order}</span>
       <div className={styles.projectIndexTitle}>
         <p>{project.category}</p>
@@ -335,7 +335,7 @@ function HomeRoute({ content, contentDebug }: EditorialRouteProps) {
         switch (section) {
           case "hero":
             return (
-              <section className={styles.homeHero} key={section}>
+              <section className={styles.homeHero} data-visual="hero" key={section}>
                 <div className={styles.heroIssue}>
                   <span>
                     {homeCopy.hero.issueTemplate.replace(
@@ -624,7 +624,7 @@ function ProjectDetailRoute({ content, contentDebug, project }: EditorialRoutePr
 
   return (
     <article className={styles.caseStudy}>
-      <header className={styles.caseHero}>
+      <header className={styles.caseHero} data-visual="project-hero">
         <div className={styles.caseMetaRail}>
           <Link
             href={editorialHref("/projects", contentDebug)}
