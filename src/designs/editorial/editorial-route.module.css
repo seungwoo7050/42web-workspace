@@ -2388,6 +2388,25 @@
   color: var(--vermilion-on-dark);
 }
 
+/* 한글은 글자 상자를 꽉 채워서 라틴 문자용 1 미만 줄 간격에서 윗줄과 아랫줄이 겹친다. drop cap은 장식이라 제외한다 */
+.footerLead a:lang(ko),
+.heroTitleBlock h1:lang(ko),
+.leadStoryCopy h2:lang(ko),
+.contactStrip h2:lang(ko),
+.pageHero h1:lang(ko),
+.caseTitle h1:lang(ko),
+.profileHero h1:lang(ko),
+.skillsIntro > h2:lang(ko),
+.curationIntro h2:lang(ko),
+.contactHero h1:lang(ko),
+.milestoneStory h2:lang(ko),
+.timelineSpread > div h2:lang(ko),
+.currentPosition h2:lang(ko),
+.interviewTracks > section > header h2:lang(ko),
+.gapsSpread h2:lang(ko) {
+  line-height: 1.12;
+}
+
 @media (max-width: 1180px) {
   .mastheadMain {
     grid-template-columns: 0.7fr 1.3fr auto;
@@ -2688,6 +2707,11 @@
 
   .heroTitleBlock h1 {
     font-size: clamp(3.3rem, 16vw, 5.5rem);
+  }
+
+  /* 라틴 단어에 맞춘 크기라 한글은 한 줄에 6자 남짓만 들어가 어절이 넘친다. 한 줄에 8자 정도가 들어가게 줄인다 */
+  .heroTitleBlock h1:lang(ko) {
+    font-size: clamp(2.4rem, 11vw, 4rem);
   }
 
   .heroSummary {
