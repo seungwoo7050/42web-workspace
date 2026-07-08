@@ -5,9 +5,11 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/e2e",
   testMatch: "visual.spec.ts",
-  timeout: 60_000,
+  // 큰 전체 페이지는 느린 러너나 amd64 에뮬레이션에서 연속 두 장을 맞추는 데 오래 걸린다.
+  // 시간 제한은 기다리는 시간만 늘리고 비교 기준은 바꾸지 않는다
+  timeout: 180_000,
   expect: {
-    timeout: 10_000,
+    timeout: 30_000,
   },
   reporter: [["list"], ["html", { open: "never" }]],
   outputDir: "test-results",

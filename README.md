@@ -76,12 +76,39 @@ npm run test:e2e:production   # production 빌드 후 Playwright E2E
 | 명령 | 내용 |
 | --- | --- |
 | `npm run test:e2e` | 개발 서버 대상 Playwright E2E |
+| `npm run test:visual` | 고정 fixture 빌드로 비주얼 회귀 비교(Docker 필요) |
+| `npm run test:visual:update` | 비주얼 기준 이미지 다시 만들기(Docker 필요) |
 | `npm run build:verify` | standalone 산출물과 필수 파일 검사 |
 | `npm run bundle:check` | route별 client bundle을 저장된 기준값과 비교 |
 | `npm run lighthouse:audit` | Lighthouse 기준 검사 |
 | `npm run test:container` | Docker 이미지를 빌드해 route와 정적 자산 응답 검사 |
 
 `test:e2e:production`의 production은 Next production 서버를 뜻하며 `PORTFOLIO_CONTENT_MODE`를 바꾸지 않습니다. `make check`는 콘텐츠 검사, lint, typecheck, 단위 테스트를 한 번에 실행합니다.
+
+### 비주얼 회귀
+
+검사 대상마다 입력을 나눕니다.
+
+| 검사 대상 | 입력 | 수단 |
+| --- | --- | --- |
+| 콘텐츠가 올바른지 | `src/content/*.json` | `content:check`, `content:ready` |
+| 기능과 구조가 올바른지 | `src/content/*.json` | Playwright E2E(role과 텍스트) |
+| 겉모습이 회귀했는지 | `tests/fixtures/content/*.json` | 비주얼 스냅샷 |
+
+비주얼 스냅샷은 실제 콘텐츠가 아니라 고정 fixture로 빌드한 사이트를 찍습니다. 그래서 `src/content`를 아무리 고쳐도 기준 이미지는 그대로이고, CSS나 컴포넌트가 바뀔 때만 실패합니다. fixture에는 긴 제목, 여러 줄 한글, 사진 없음, 상세 이미지 0장·여러 장 같은 까다로운 경우를 일부러 넣었습니다.
+
+- 디자인마다 전체 홈과 `data-visual` 표식이 붙은 header, hero, footer, `visual-sample` 카드, 상세 hero를 데스크톱·모바일에서 찍습니다. 실패하면 어느 단위가 깨졌는지 이름으로 보입니다.
+- 기준 이미지는 CI와 같은 Playwright 공식 Docker 이미지(linux/amd64)에서만 만듭니다. 운영체제마다 글꼴 렌더링이 달라 macOS·Windows에서 만든 이미지는 CI에서 통과하지 않습니다. 파일 이름에 플랫폼이 들어가며 `*-linux.png`만 커밋합니다.
+- `npm run test:visual`은 저장소를 컨테이너 안에 복사해 빌드하므로 로컬 `node_modules`, `.next`, `public`을 바꾸지 않습니다. Apple Silicon에서는 amd64 에뮬레이션이라 몇 분 걸립니다.
+- CI의 `visual` job이 같은 비교를 하고, 실패하면 diff 이미지를 `visual-results` artifact로 남깁니다. 이 job이 통과해야 배포합니다.
+
+운영 규칙:
+
+1. 디자인을 의도해서 바꿨다면 같은 커밋에서 `npm run test:visual:update`로 기준 이미지를 갱신하고, 바뀐 이미지를 직접 열어 의도한 변화만 있는지 확인합니다.
+2. 의도하지 않았는데 실패했다면 기준 이미지를 갱신하지 말고 `test-results/`의 `*-diff.png`로 원인을 찾습니다.
+3. 콘텐츠를 바꾼 커밋에서 비주얼 회귀가 실패하면 콘텐츠가 아니라 그 커밋의 다른 변경을 의심합니다.
+4. 새 화면 요소를 검사하려면 컴포넌트에 `data-visual` 표식을 달고, 필요한 경우를 `tests/fixtures/content`에 추가합니다. fixture도 실제 콘텐츠와 같은 스키마 검사를 통과해야 합니다.
+5. `@playwright/test`를 올리면 CI의 Playwright 이미지 태그도 같이 올리고 기준 이미지를 다시 만듭니다. 둘이 어긋나면 단위 테스트가 실패합니다.
 
 ## 범위와 제한
 

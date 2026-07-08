@@ -1,6 +1,8 @@
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+
+import playwrightPackage from "@playwright/test/package.json";
 
 import { SITE_DESIGN_IDS } from "./config";
 
@@ -33,5 +35,17 @@ describe("visual regression contract", () => {
       .sort();
 
     expect(actualSnapshotManifest).toEqual(expectedSnapshotManifest);
+  });
+
+  it("runs CI in the Playwright image that matches the installed version", () => {
+    const workflow = readFileSync(
+      resolve(process.cwd(), ".github/workflows/ci.yml"),
+      "utf8",
+    );
+
+    // 로컬 scripts/visual-docker.sh는 설치된 버전으로 태그를 고른다. CI만 어긋나면 기준 이미지와 렌더링이 달라진다
+    expect(workflow).toContain(
+      `image: mcr.microsoft.com/playwright:v${playwrightPackage.version}-noble`,
+    );
   });
 });

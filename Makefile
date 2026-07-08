@@ -8,7 +8,7 @@ PLAYWRIGHT_BROWSER ?= chromium
 	lint typecheck content content-ready unit unit-functional \
 	test check check-functional \
 	build build-verify bundle-check bundle-baseline \
-	e2e e2e-production \
+	e2e e2e-production visual visual-update \
 	lighthouse lighthouse-summarize container verify ci \
 	clean fclean re
 
@@ -36,7 +36,8 @@ help:
 		'  build-verify         Verify the standalone build artifacts' \
 		'  bundle-check         Check route bundles against committed budgets' \
 		'  e2e                  Run Playwright against the development server' \
-		'  e2e-production       Build and run all production Playwright tests' \
+		'  e2e-production       Build and run non-visual production Playwright tests' \
+		'  visual               Compare visual snapshots in the Playwright Docker image' \
 		'  lighthouse           Run the production Lighthouse budget' \
 		'  container            Verify the built Docker image and public assets' \
 		'  verify               Run check plus non-visual production E2E/build gates' \
@@ -44,6 +45,7 @@ help:
 		'' \
 		'Baseline maintenance:' \
 		'  bundle-baseline      Replace the committed route bundle baseline' \
+		'  visual-update        Regenerate visual snapshots in the Playwright Docker image' \
 		'  lighthouse-summarize Summarize existing Lighthouse reports' \
 		'' \
 		'Cleanup:' \
@@ -110,6 +112,12 @@ e2e:
 
 e2e-production:
 	$(NPM) run test:e2e:production
+
+visual:
+	$(NPM) run test:visual
+
+visual-update:
+	$(NPM) run test:visual:update
 
 lighthouse:
 	$(NPM) run lighthouse:audit
