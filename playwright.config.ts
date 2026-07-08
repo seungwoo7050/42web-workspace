@@ -2,14 +2,14 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  // 비주얼 회귀는 고정 fixture 빌드가 필요해서 playwright.visual.config.ts로만 돌린다
+  testIgnore: "visual.spec.ts",
   timeout: 30_000,
   expect: {
     timeout: 5_000,
   },
   reporter: [["list"]],
   outputDir: "test-results",
-  snapshotPathTemplate:
-    "{testDir}/{testFilePath}-snapshots/{arg}-{projectName}{ext}",
   // Next's development compiler can invalidate an in-flight navigation when
   // both device projects request a cold route at the same time.
   workers: 1,

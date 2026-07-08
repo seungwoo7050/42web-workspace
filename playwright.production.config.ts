@@ -2,14 +2,14 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  // 비주얼 회귀는 고정 fixture 빌드가 필요해서 playwright.visual.config.ts로만 돌린다
+  testIgnore: "visual.spec.ts",
   timeout: 30_000,
   expect: {
     timeout: 5_000,
   },
   reporter: [["list"], ["github"], ["html", { open: "never" }]],
   outputDir: "test-results",
-  snapshotPathTemplate:
-    "{testDir}/{testFilePath}-snapshots/{arg}-{projectName}{ext}",
   workers: 1,
   use: {
     baseURL: "http://localhost:3200",

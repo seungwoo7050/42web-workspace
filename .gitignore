@@ -45,3 +45,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# visual baselines are generated on Linux only (npm run test:visual:update)
+tests/e2e/visual.spec.ts-snapshots/*-darwin.png
+tests/e2e/visual.spec.ts-snapshots/*-win32.png

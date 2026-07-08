@@ -9,14 +9,25 @@ const snapshotDirectory = resolve(
   "tests/e2e/visual.spec.ts-snapshots",
 );
 
-const expectedSnapshotManifest = SITE_DESIGN_IDS.flatMap((designId) => [
-  `home-${designId}-chromium.png`,
-  `home-${designId}-mobile-chrome.png`,
-  `project-${designId}-chromium.png`,
-]).sort();
+const visualUnits = [
+  "home",
+  "header",
+  "hero",
+  "footer",
+  "project-card",
+  "project-hero",
+];
+const devices = ["chromium", "mobile-chrome"];
+
+// 기준 이미지는 Playwright Docker 이미지(Linux)에서만 만든다
+const expectedSnapshotManifest = SITE_DESIGN_IDS.flatMap((designId) =>
+  visualUnits.flatMap((unit) =>
+    devices.map((device) => `${unit}-${designId}-${device}-linux.png`),
+  ),
+).sort();
 
 describe("visual regression contract", () => {
-  it("keeps the exact desktop and mobile snapshot manifest", () => {
+  it("keeps the exact Linux desktop and mobile snapshot manifest", () => {
     const actualSnapshotManifest = readdirSync(snapshotDirectory)
       .filter((fileName) => fileName.endsWith(".png"))
       .sort();

@@ -28,8 +28,11 @@
     "test:container": "node scripts/verify-container-runtime.mjs",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:e2e:ci": "npm run build && playwright test --config=playwright.production.config.ts --grep-invert @visual",
-    "test:e2e:production": "npm run build && playwright test --config=playwright.production.config.ts"
+    "test:e2e:ci": "npm run build && playwright test --config=playwright.production.config.ts",
+    "test:e2e:production": "npm run build && playwright test --config=playwright.production.config.ts",
+    "test:visual": "bash scripts/visual-docker.sh",
+    "test:visual:update": "bash scripts/visual-docker.sh --update-snapshots",
+    "test:visual:container": "bash scripts/visual-container.sh"
   },
   "dependencies": {
     "next": "16.3.8",

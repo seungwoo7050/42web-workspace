@@ -1,0 +1,4 @@
+/* sticky header가 스크롤된 단위 위에 겹쳐 찍히지 않게 숨긴다. visibility라 레이아웃은 그대로다 */
+[data-visual="header"] {
+  visibility: hidden !important;
+}
