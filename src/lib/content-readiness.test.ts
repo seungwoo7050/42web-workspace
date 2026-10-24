@@ -86,12 +86,20 @@ function createProductionReadyContent() {
     alt: "Portfolio Owner portrait",
   };
   content.resume.downloadUrl = "/content/resume/portfolio-owner.pdf";
-  content.projects.items[0].links[0] = {
-    ...content.projects.items[0].links[0],
-    enabled: true,
-    href: "https://github.com/portfolio-owner/realtime-collaboration",
-    label: "Source",
-  };
+  // production은 프로젝트마다 공개 URL 하나를 요구한다. 프로젝트 수와 기존 링크 유무에 기대지 않는다
+  for (const project of content.projects.items) {
+    project.links = [
+      {
+        id: `${project.id}-source`,
+        type: "source",
+        label: "Source",
+        href: `https://github.com/portfolio-owner/${project.id}`,
+        external: true,
+        enabled: true,
+        placements: ["card", "detail"],
+      },
+    ];
+  }
 
   return content;
 }

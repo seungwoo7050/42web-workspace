@@ -93,9 +93,10 @@ npm run test:e2e:production   # production 빌드 후 Playwright E2E
 | --- | --- | --- |
 | 콘텐츠가 올바른지 | `src/content/*.json` | `content:check`, `content:ready` |
 | 기능과 구조가 올바른지 | `src/content/*.json` | Playwright E2E(role과 텍스트) |
+| 코드 단위 동작이 올바른지 | `tests/fixtures/content/*.json` | Vitest 단위 테스트 |
 | 겉모습이 회귀했는지 | `tests/fixtures/content/*.json` | 비주얼 스냅샷 |
 
-비주얼 스냅샷은 실제 콘텐츠가 아니라 고정 fixture로 빌드한 사이트를 찍습니다. 그래서 `src/content`를 아무리 고쳐도 기준 이미지는 그대로이고, CSS나 컴포넌트가 바뀔 때만 실패합니다. fixture에는 긴 제목, 여러 줄 한글, 사진 없음, 상세 이미지 0장·여러 장 같은 까다로운 경우를 일부러 넣었습니다.
+단위 테스트는 Vitest 설정에서 `@/content`를 fixture로 바꿔 읽으므로, 페이지를 끄거나 디자인 이름을 바꾸는 등 콘텐츠를 고쳐도 실패하지 않습니다. 비주얼 스냅샷도 실제 콘텐츠가 아니라 고정 fixture로 빌드한 사이트를 찍습니다. 그래서 `src/content`를 아무리 고쳐도 기준 이미지는 그대로이고, CSS나 컴포넌트가 바뀔 때만 실패합니다. fixture에는 긴 제목, 여러 줄 한글, 사진 없음, 상세 이미지 0장·여러 장 같은 까다로운 경우를 일부러 넣었습니다.
 
 - 디자인마다 전체 홈과 `data-visual` 표식이 붙은 header, hero, footer, `visual-sample` 카드, 상세 hero를 데스크톱·모바일에서 찍습니다. 실패하면 어느 단위가 깨졌는지 이름으로 보입니다.
 - 기준 이미지는 CI와 같은 Playwright 공식 Docker 이미지(linux/amd64)에서만 만듭니다. 운영체제마다 글꼴 렌더링이 달라 macOS·Windows에서 만든 이미지는 CI에서 통과하지 않습니다. 파일 이름에 플랫폼이 들어가며 `*-linux.png`만 커밋합니다.

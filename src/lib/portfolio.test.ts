@@ -108,7 +108,7 @@ describe("portfolio content", () => {
   it("loads and derives the reusable projects content model", () => {
     const source = validatePortfolioAssets(
       loadPortfolioSource(),
-      resolve(process.cwd(), "public"),
+      resolve(process.cwd(), "tests/fixtures/public"),
     );
     const content = getPortfolioContent();
     const sourceGroups = new Map(

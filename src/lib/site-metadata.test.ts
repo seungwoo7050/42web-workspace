@@ -108,7 +108,9 @@ describe("sitemap", () => {
     expect(sitemap.map(({ url }) => url)).toEqual([
       "https://portfolio.example.dev/",
       "https://portfolio.example.dev/projects",
-      `https://portfolio.example.dev/projects/${content.projects[0]?.id}`,
+      ...content.projects.map(
+        ({ id }) => `https://portfolio.example.dev/projects/${id}`,
+      ),
       "https://portfolio.example.dev/about",
       "https://portfolio.example.dev/resume",
       "https://portfolio.example.dev/contact",
