@@ -4,36 +4,36 @@
   "source": "Next.js production client assets (uncompressed bytes)",
   "routes": {
     "/about": {
-      "cssBytes": 169861,
-      "jsBytes": 425976
+      "cssBytes": 171386,
+      "jsBytes": 450071
     },
     "/contact": {
-      "cssBytes": 169861,
-      "jsBytes": 425976
+      "cssBytes": 171386,
+      "jsBytes": 450071
     },
     "/interview-map": {
-      "cssBytes": 169861,
-      "jsBytes": 425976
+      "cssBytes": 171386,
+      "jsBytes": 450071
     },
     "/journey": {
-      "cssBytes": 169861,
-      "jsBytes": 425976
+      "cssBytes": 171386,
+      "jsBytes": 450071
     },
     "/": {
-      "cssBytes": 169861,
-      "jsBytes": 425976
+      "cssBytes": 171386,
+      "jsBytes": 450071
     },
     "/projects/[projectId]": {
-      "cssBytes": 169861,
-      "jsBytes": 425976
+      "cssBytes": 171386,
+      "jsBytes": 450071
     },
     "/projects": {
-      "cssBytes": 169861,
-      "jsBytes": 425976
+      "cssBytes": 171386,
+      "jsBytes": 450071
     },
     "/resume": {
-      "cssBytes": 169861,
-      "jsBytes": 425976
+      "cssBytes": 171386,
+      "jsBytes": 450071
     }
   }
 }
