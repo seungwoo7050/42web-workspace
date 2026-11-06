@@ -1,9 +1,15 @@
-# portfolio-template
+<p align="center">
+  <h1 align="center">portfolio-template</h1>
+  <p align="center"><b>JSON 콘텐츠와 5종 디자인 렌더러를 분리한 Next.js 16 포트폴리오 사이트 템플릿</b></p>
+  <p align="center">
+    <img src="https://img.shields.io/badge/language-TypeScript-blue?logo=typescript&logoColor=white" alt="Language">
+    <img src="https://img.shields.io/badge/platform-Node.js-lightgrey" alt="Platform">
+  </p>
+</p>
 
-![Language](https://img.shields.io/badge/language-TypeScript-blue?logo=typescript&logoColor=white)
-![Platform](https://img.shields.io/badge/platform-Node.js-lightgrey)
+---
 
-Next.js 16(App Router, React 19)으로 만든 포트폴리오 사이트 템플릿입니다. `src/content`의 JSON으로 프로필·프로젝트·연락처 페이지를 만들고, 같은 콘텐츠를 다섯 가지 디자인(Design, Classic, Editorial, Brutalist, Cinematic) 중 하나로 보여 줍니다.
+Next.js 16(App Router, React 19)으로 만든 포트폴리오 사이트 템플릿입니다. `src/content`의 JSON으로 프로필, 프로젝트, 연락처 페이지를 만들고, 같은 콘텐츠를 다섯 가지 디자인(Design, Classic, Editorial, Brutalist, Cinematic) 중 하나로 보여 줍니다.
 
 ## 구성
 
@@ -13,7 +19,21 @@ Next.js 16(App Router, React 19)으로 만든 포트폴리오 사이트 템플�
 | `src/designs/` | 다섯 디자인의 renderer |
 | `src/app/` | route와 metadata(`robots.ts`, `sitemap.ts`) |
 | `public/template/` | 예제 콘텐츠가 가리키는 자산 |
-| `scripts/` | 콘텐츠 검사, 빌드 산출물·bundle·컨테이너 검사 스크립트 |
+| `scripts/` | 콘텐츠 검사, 빌드 산출물, bundle, 컨테이너 검사 스크립트 |
+
+## 설계와 검증 파이프라인
+
+```mermaid
+flowchart LR
+    Content["src/content/*.json\n(운영 데이터)"] --> Schema["Zod 스키마 및\nReadiness 검증"]
+    Fixture["tests/fixtures/content/*.json\n(고정 픽스처)"] --> Schema
+    Schema --> Renderers["5종 디자인 렌더러\n(Design, Classic, Editorial,\nBrutalist, Cinematic)"]
+    Renderers --> E2E["Playwright E2E\n(운영 콘텐츠 기능 검사)"]
+    Renderers --> Visual["Linux Docker Playwright\n비주얼 스냅샷 대조"]
+```
+
+- **콘텐츠(JSON)와 렌더러(5종 디자인) 분리**: `src/content/*.json` 스키마를 단일 데이터 소스로 삼고 Design, Classic, Editorial, Brutalist, Cinematic 5개 렌더러가 동일 인터페이스를 소비합니다.
+- **고정 Fixture 기반 비주얼 회귀 격리**: 단위 테스트와 Playwright 비주얼 스냅샷(`*-linux.png`)은 `src/content` 대신 `tests/fixtures/content`를 주입해 빌드하므로, 사용자가 프로필이나 프로젝트 문구를 수정해도 레이아웃 회귀 검사가 깨지지 않습니다.
 
 ## 요구 환경
 
@@ -45,8 +65,8 @@ docker run --rm -p 3100:3100 portfolio-template
 
 ## 콘텐츠 바꾸기
 
-- 문구와 데이터는 `src/content/*.json`을 고칩니다. 페이지 켜기·끄기는 `site.json`의 `pages`, 프로젝트는 `projects.json`에 있습니다.
-- 실제 공개용 이미지·이력서 파일은 `public/content/` 아래에 두고 JSON에서 `/content/...`로 가리킵니다.
+- 문구와 데이터는 `src/content/*.json`을 고칩니다. 페이지 켜기와 끄기는 `site.json`의 `pages`, 프로젝트는 `projects.json`에 있습니다.
+- 실제 공개용 이미지와 이력서 파일은 `public/content/` 아래에 두고 JSON에서 `/content/...`로 가리킵니다.
 - 기본 디자인은 `presentation.json`의 `defaultHomeTemplate`(기본값 `editorial`)으로 정합니다. 방문자는 `?view=design|classic|editorial|brutalist|cinematic`으로 바꿔 볼 수 있습니다.
 - `?debug=content`를 붙이면 화면의 문구가 어느 JSON 위치에서 왔는지 표시합니다.
 
@@ -55,7 +75,7 @@ docker run --rm -p 3100:3100 portfolio-template
 | mode | 동작 |
 | --- | --- |
 | `template` (기본) | 예제 값을 허용하고 검색 엔진 색인을 막습니다. |
-| `production` | placeholder 문구, `public/content/` 밖 자산, 빠진 프로필·소셜 이미지·이력서가 있거나 공개 URL이 있는 프로젝트, 실제 연락처가 하나도 없으면 실패합니다. `SITE_URL`에 실제 공개 origin이 필요합니다. |
+| `production` | placeholder 문구, `public/content/` 밖 자산, 빠진 프로필, 소셜 이미지, 이력서가 있거나 공개 URL이 있는 프로젝트, 실제 연락처가 하나도 없으면 실패합니다. `SITE_URL`에 실제 공개 origin이 필요합니다. |
 
 배포 전에는 다음으로 검사합니다. `npm run build`도 `prebuild`에서 두 검사를 먼저 실행하므로 production 검사에 실패하면 빌드가 멈춥니다.
 
@@ -96,10 +116,10 @@ npm run test:e2e:production   # production 빌드 후 Playwright E2E
 | 코드 단위 동작이 올바른지 | `tests/fixtures/content/*.json` | Vitest 단위 테스트 |
 | 겉모습이 회귀했는지 | `tests/fixtures/content/*.json` | 비주얼 스냅샷 |
 
-단위 테스트는 Vitest 설정에서 `@/content`를 fixture로 바꿔 읽으므로, 페이지를 끄거나 디자인 이름을 바꾸는 등 콘텐츠를 고쳐도 실패하지 않습니다. 비주얼 스냅샷도 실제 콘텐츠가 아니라 고정 fixture로 빌드한 사이트를 찍습니다. 그래서 `src/content`를 아무리 고쳐도 기준 이미지는 그대로이고, CSS나 컴포넌트가 바뀔 때만 실패합니다. fixture에는 긴 제목, 여러 줄 한글, 사진 없음, 상세 이미지 0장·여러 장 같은 까다로운 경우를 일부러 넣었습니다.
+단위 테스트는 Vitest 설정에서 `@/content`를 fixture로 바꿔 읽으므로, 페이지를 끄거나 디자인 이름을 바꾸는 등 콘텐츠를 고쳐도 실패하지 않습니다. 비주얼 스냅샷도 실제 콘텐츠가 아니라 고정 fixture로 빌드한 사이트를 찍습니다. 그래서 `src/content`를 아무리 고쳐도 기준 이미지는 그대로이고, CSS나 컴포넌트가 바뀔 때만 실패합니다. fixture에는 긴 제목, 여러 줄 한글, 사진 없음, 상세 이미지 0장 또는 여러 장 같은 까다로운 경우를 일부러 넣었습니다.
 
-- 디자인마다 전체 홈과 `data-visual` 표식이 붙은 header, hero, footer, `visual-sample` 카드, 상세 hero를 데스크톱·모바일에서 찍습니다. 실패하면 어느 단위가 깨졌는지 이름으로 보입니다.
-- 기준 이미지는 CI와 같은 Playwright 공식 Docker 이미지(linux/amd64)에서만 만듭니다. 운영체제마다 글꼴 렌더링이 달라 macOS·Windows에서 만든 이미지는 CI에서 통과하지 않습니다. 파일 이름에 플랫폼이 들어가며 `*-linux.png`만 커밋합니다.
+- 디자인마다 전체 홈과 `data-visual` 표식이 붙은 header, hero, footer, `visual-sample` 카드, 상세 hero를 데스크톱과 모바일에서 찍습니다. 실패하면 어느 단위가 깨졌는지 이름으로 보입니다.
+- 기준 이미지는 CI와 같은 Playwright 공식 Docker 이미지(linux/amd64)에서만 만듭니다. 운영체제마다 글꼴 렌더링이 달라 macOS나 Windows에서 만든 이미지는 CI에서 통과하지 않습니다. 파일 이름에 플랫폼이 들어가며 `*-linux.png`만 커밋합니다.
 - `npm run test:visual`은 저장소를 컨테이너 안에 복사해 빌드하므로 로컬 `node_modules`, `.next`, `public`을 바꾸지 않습니다. Apple Silicon에서는 amd64 에뮬레이션이라 몇 분 걸립니다.
 - CI의 `visual` job이 같은 비교를 하고, 실패하면 diff 이미지를 `visual-results` artifact로 남깁니다. 이 job이 통과해야 배포합니다.
 
