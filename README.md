@@ -1,11 +1,15 @@
-# 42web-workspace
+<p align="center">
+  <h1 align="center">42web-workspace</h1>
+  <p align="center"><b>42 과정의 웹 및 인프라 과제를 변형해 다시 구현한 프로젝트와 포트폴리오 사이트 템플릿 모음</b></p>
+  <p align="center">
+    <img src="https://img.shields.io/badge/platform-Docker-lightgrey" alt="Platform">
+    <img src="https://img.shields.io/badge/build-Make-lightgrey" alt="Build">
+  </p>
+</p>
 
-![Platform](https://img.shields.io/badge/platform-Docker-lightgrey)
-![Build](https://img.shields.io/badge/build-Make-lightgrey)
+---
 
-42 과정의 웹·인프라 과제를 변형해 다시 구현한 프로젝트와 포트폴리오 사이트 템플릿 프로젝트를 모은 저장소입니다.
-
-프로젝트마다 공통 조상이 없는 독립 브랜치를 쓰고, 이 브랜치(`main`)에는 이 문서만 있습니다.
+42 과정의 웹 및 인프라 과제를 변형해 다시 구현한 프로젝트와 포트폴리오 사이트 템플릿 프로젝트를 모은 저장소입니다. 프로젝트마다 공통 조상이 없는 독립 브랜치를 쓰고, 이 브랜치(`main`)에는 이 문서만 있습니다.
 
 ## 프로젝트
 
