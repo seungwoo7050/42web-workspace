@@ -1,5 +1,6 @@
 import type { IncomingMessage } from "node:http";
 import { randomUUID } from "node:crypto";
+import { clamp } from "es-toolkit";
 import { WebSocket } from "ws";
 import type { AppRepository, MatchResultRepository } from "@pong-pong/db";
 import {
@@ -1014,7 +1015,7 @@ export class GameHub {
     if (this.rooms.get(room.id) !== room) return Promise.resolve(false);
     this.clearFinalizationRetryTimer(room);
     const delayMs = Math.min(
-      FINALIZATION_RETRY_BASE_DELAY_MS * 2 ** Math.min(Math.max(0, attempt - 1), 10),
+      FINALIZATION_RETRY_BASE_DELAY_MS * 2 ** clamp(attempt - 1, 0, 10),
       FINALIZATION_RETRY_MAX_DELAY_MS
     );
     return new Promise((resolve) => {

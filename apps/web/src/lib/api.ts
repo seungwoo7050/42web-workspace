@@ -86,24 +86,24 @@ export async function apiFetch<T>(
   return schema.parse(await response.json());
 }
 
+function jsonRequest(method: "POST" | "PATCH", body?: unknown, signal?: AbortSignal): RequestInit {
+  return {
+    method,
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    signal
+  };
+}
+
 export async function devLogin(
   handle: string,
   displayName: string,
   signal?: AbortSignal
 ): Promise<SessionUser> {
-  const result = await apiFetch("/auth/dev-login", userResponseSchema, {
-    method: "POST",
-    body: JSON.stringify({ handle, displayName }),
-    signal
-  });
-  return result.user;
+  return (await apiFetch("/auth/dev-login", userResponseSchema, jsonRequest("POST", { handle, displayName }, signal))).user;
 }
 
 export async function guestLogin(signal?: AbortSignal): Promise<GuestAuthResponse> {
-  return apiFetch("/auth/guest", guestAuthResponseSchema, {
-    method: "POST",
-    signal
-  });
+  return apiFetch("/auth/guest", guestAuthResponseSchema, jsonRequest("POST", undefined, signal));
 }
 
 export async function getMe(signal?: AbortSignal): Promise<SessionUser | null> {
@@ -120,11 +120,7 @@ export async function getLobby(signal?: AbortSignal): Promise<LobbyResponse> {
 }
 
 export async function sendLobbyChat(body: string, signal?: AbortSignal): Promise<ChatMessage> {
-  return (await apiFetch("/chat/lobby", chatResponseSchema, {
-    method: "POST",
-    body: JSON.stringify({ body }),
-    signal
-  })).message;
+  return (await apiFetch("/chat/lobby", chatResponseSchema, jsonRequest("POST", { body }, signal))).message;
 }
 
 export async function getDashboard(signal?: AbortSignal): Promise<DashboardSummary> {
@@ -144,18 +140,11 @@ export async function getTournaments(signal?: AbortSignal): Promise<TournamentSu
 }
 
 export async function createTournament(name: string, signal?: AbortSignal): Promise<TournamentSummary> {
-  return (await apiFetch("/tournaments", tournamentResponseSchema, {
-    method: "POST",
-    body: JSON.stringify({ name }),
-    signal
-  })).tournament;
+  return (await apiFetch("/tournaments", tournamentResponseSchema, jsonRequest("POST", { name }, signal))).tournament;
 }
 
 export async function joinTournament(id: string, signal?: AbortSignal): Promise<TournamentSummary> {
-  return (await apiFetch(`/tournaments/${id}/join`, tournamentResponseSchema, {
-    method: "POST",
-    signal
-  })).tournament;
+  return (await apiFetch(`/tournaments/${id}/join`, tournamentResponseSchema, jsonRequest("POST", undefined, signal))).tournament;
 }
 
 export async function getProfile(
@@ -173,19 +162,11 @@ export async function updateOwnProfile(
   input: ProfileUpdateBody,
   signal?: AbortSignal
 ): Promise<SessionUser> {
-  return (await apiFetch("/profile/me", ownProfileResponseSchema, {
-    method: "PATCH",
-    body: JSON.stringify(input),
-    signal
-  })).profile;
+  return (await apiFetch("/profile/me", ownProfileResponseSchema, jsonRequest("PATCH", input, signal))).profile;
 }
 
 export async function requestFriend(handle: string, signal?: AbortSignal): Promise<FriendSummary> {
-  return (await apiFetch("/friends/request", friendResponseSchema, {
-    method: "POST",
-    body: JSON.stringify({ handle }),
-    signal
-  })).friend;
+  return (await apiFetch("/friends/request", friendResponseSchema, jsonRequest("POST", { handle }, signal))).friend;
 }
 
 export async function getAdminUsers(signal?: AbortSignal): Promise<PublicUser[]> {
@@ -202,15 +183,11 @@ export async function setUserStatus(
   reason: string,
   signal?: AbortSignal
 ): Promise<PublicUser> {
-  return (await apiFetch(`/admin/users/${id}/status`, publicUserResponseSchema, {
-    method: "PATCH",
-    body: JSON.stringify({ status, reason }),
-    signal
-  })).user;
+  return (await apiFetch(`/admin/users/${id}/status`, publicUserResponseSchema, jsonRequest("PATCH", { status, reason }, signal))).user;
 }
 
 export async function requestWsTicket(signal?: AbortSignal): Promise<WsTicketResponse> {
-  return apiFetch("/auth/ws-ticket", wsTicketResponseSchema, { method: "POST", signal });
+  return apiFetch("/auth/ws-ticket", wsTicketResponseSchema, jsonRequest("POST", undefined, signal));
 }
 
 async function responseError(response: Response): Promise<ApiError> {

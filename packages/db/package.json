@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@pong-pong/shared": "workspace:*",
+    "es-toolkit": "^1.53.2",
     "kysely": "^0.28.2",
     "pg": "^8.15.6"
   },

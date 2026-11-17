@@ -1,3 +1,4 @@
+import { clamp } from "es-toolkit";
 import {
   BALL_RADIUS,
   GAME_HEIGHT,
@@ -70,9 +71,9 @@ export class PongSimulation {
     if (!Number.isFinite(deltaMs) || deltaMs <= 0) {
       throw new RangeError("deltaMs must be a positive finite number");
     }
-    if (state.phase === "finished") return cloneState(state);
+    if (state.phase === "finished") return structuredClone(state) as PongSimulationState;
 
-    const next = cloneState(state);
+    const next = structuredClone(state) as PongSimulationState;
     const timestepScale = deltaMs / FIXED_TIMESTEP_MS;
     next.tick += 1;
     movePaddle(next, "left", inputs.left, timestepScale);
@@ -106,24 +107,6 @@ export class PongSimulation {
 
     return next;
   }
-}
-
-function cloneState(state: Readonly<PongSimulationState>): PongSimulationState {
-  return {
-    tick: state.tick,
-    phase: state.phase,
-    leftScore: state.leftScore,
-    rightScore: state.rightScore,
-    paddles: {
-      left: { ...state.paddles.left },
-      right: { ...state.paddles.right }
-    },
-    ball: {
-      position: { ...state.ball.position },
-      velocity: { ...state.ball.velocity }
-    },
-    winnerSide: state.winnerSide
-  };
 }
 
 function movePaddle(
@@ -195,8 +178,4 @@ function accelerateBall(state: PongSimulationState, timestepScale: number): void
   const scale = nextSpeed / currentSpeed;
   velocity.x *= scale;
   velocity.y *= scale;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
 }

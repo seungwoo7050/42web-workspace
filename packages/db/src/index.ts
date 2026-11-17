@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { orderBy, sortBy } from "es-toolkit";
 import { Kysely, PostgresDialect, sql, type Transaction } from "kysely";
 import { Pool } from "pg";
 import type {
@@ -1055,19 +1056,18 @@ class MemoryRepository implements AppRepository {
   }
 
   async listOnlineUsers(): Promise<PublicUser[]> {
-    return [...this.users.values()].sort((a, b) => b.rating - a.rating).map((user) => toPublicUser(user, true));
+    return orderBy([...this.users.values()], ["rating"], ["desc"]).map((user) => toPublicUser(user, true));
   }
 
   async listNpcOpponents(): Promise<PublicUser[]> {
-    return [...this.users.values()]
-      .filter((user) => user.is_npc && user.status === "active")
-      .sort((a, b) => a.rating - b.rating)
-      .map((user) => toPublicUser(user, false));
+    return sortBy(
+      [...this.users.values()].filter((user) => user.is_npc && user.status === "active"),
+      ["rating"]
+    ).map((user) => toPublicUser(user, false));
   }
 
   async listLeaderboard(): Promise<LeaderboardEntry[]> {
-    return [...this.users.values()]
-      .sort((a, b) => b.rating - a.rating || b.wins - a.wins)
+    return orderBy([...this.users.values()], ["rating", "wins"], ["desc", "desc"])
       .map((user, index) => ({ rank: index + 1, user: toPublicUser(user, false), winRate: percentage(user.wins, user.losses) }));
   }
 

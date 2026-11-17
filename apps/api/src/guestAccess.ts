@@ -5,6 +5,7 @@ import {
   randomUUID,
   timingSafeEqual
 } from "node:crypto";
+import { LRUCache } from "lru-cache";
 import type { SessionUser } from "@pong-pong/shared";
 import { createRawWsTicket, hashWsTicket, WS_TICKET_TTL_SECONDS } from "./wsTicket.js";
 
@@ -70,14 +71,13 @@ export class GuestAccess {
   private readonly trackedIpLimit: number;
   private readonly ticketsPerIp: number;
   private readonly ticketIssueLimitPerMinute: number;
-  private readonly creationsByIp = new Map<string, RollingWindow>();
-  private readonly ticketIssuesByIp = new Map<string, RollingWindow>();
-  private readonly tickets = new Map<string, {
+  private readonly creationsByIp: LRUCache<string, RollingWindow>;
+  private readonly ticketIssuesByIp: LRUCache<string, RollingWindow>;
+  private readonly tickets: LRUCache<string, {
     user: GuestSessionUser;
     ip: string;
     expiresAtMs: number;
-    cleanupTimer: NodeJS.Timeout;
-  }>();
+  }>;
   private readonly ticketHashByGuest = new Map<string, string>();
   private readonly connections = new Map<string, { ip: string; leaseId: string }>();
 
@@ -94,6 +94,17 @@ export class GuestAccess {
     this.ticketsPerIp = options.ticketsPerIp ?? DEFAULT_GUEST_TICKETS_PER_IP;
     this.ticketIssueLimitPerMinute = options.ticketIssueLimitPerMinute
       ?? DEFAULT_GUEST_TICKET_ISSUE_LIMIT_PER_MINUTE;
+
+    this.creationsByIp = new LRUCache({ max: this.trackedIpLimit + 1 });
+    this.ticketIssuesByIp = new LRUCache({ max: this.trackedIpLimit + 1 });
+    this.tickets = new LRUCache({
+      max: this.ticketLimit + 1,
+      dispose: (value, key) => {
+        if (this.ticketHashByGuest.get(value.user.id) === key) {
+          this.ticketHashByGuest.delete(value.user.id);
+        }
+      }
+    });
   }
 
   get activeConnectionCount(): number {
@@ -101,10 +112,12 @@ export class GuestAccess {
   }
 
   get activeTicketCount(): number {
+    this.pruneExpired(this.tickets);
     return this.tickets.size;
   }
 
   get trackedCreationIpCount(): number {
+    this.pruneExpired(this.creationsByIp);
     return this.creationsByIp.size;
   }
 
@@ -172,11 +185,11 @@ export class GuestAccess {
   }
 
   issueWsTicket(user: GuestSessionUser, ip: string): string {
-    this.pruneExpiredTickets();
+    this.pruneExpired(this.tickets);
     this.recordTicketIssue(ip);
     const previousHash = this.ticketHashByGuest.get(user.id);
     if (previousHash) {
-      this.deleteTicket(previousHash);
+      this.tickets.delete(previousHash);
     }
     const pendingForIp = [...this.tickets.values()].filter((ticket) => ticket.ip === ip).length;
     if (pendingForIp >= this.ticketsPerIp) {
@@ -193,28 +206,18 @@ export class GuestAccess {
     }
     const ticket = createRawWsTicket();
     const ticketHash = hashWsTicket(ticket);
-    const expiresAtMs = this.clock() + (WS_TICKET_TTL_SECONDS * 1_000);
-    const cleanupTimer = setTimeout(() => this.deleteTicket(ticketHash), WS_TICKET_TTL_SECONDS * 1_000);
-    cleanupTimer.unref();
-    this.tickets.set(ticketHash, {
-      user,
-      ip,
-      expiresAtMs,
-      cleanupTimer
-    });
+    const ttlMs = WS_TICKET_TTL_SECONDS * 1_000;
+    this.tickets.set(ticketHash, { user, ip, expiresAtMs: this.clock() + ttlMs });
     this.ticketHashByGuest.set(user.id, ticketHash);
+    setTimeout(() => this.pruneExpired(this.tickets), ttlMs).unref();
     return ticket;
   }
 
   consumeWsTicket(ticketHash: string): GuestSessionUser | null {
+    this.pruneExpired(this.tickets);
     const stored = this.tickets.get(ticketHash);
-    if (stored) clearTimeout(stored.cleanupTimer);
     this.tickets.delete(ticketHash);
-    if (stored && this.ticketHashByGuest.get(stored.user.id) === ticketHash) {
-      this.ticketHashByGuest.delete(stored.user.id);
-    }
-    if (!stored || this.clock() >= stored.expiresAtMs) return null;
-    return stored.user;
+    return stored?.user ?? null;
   }
 
   acquireConnection(ip: string, guestId: string): ConnectionLease | null {
@@ -270,20 +273,8 @@ export class GuestAccess {
     };
   }
 
-  private pruneExpiredTickets(): void {
-    const nowMs = this.clock();
-    for (const [ticketHash, ticket] of this.tickets) {
-      if (nowMs < ticket.expiresAtMs) continue;
-      clearTimeout(ticket.cleanupTimer);
-      this.tickets.delete(ticketHash);
-      if (this.ticketHashByGuest.get(ticket.user.id) === ticketHash) {
-        this.ticketHashByGuest.delete(ticket.user.id);
-      }
-    }
-  }
-
   private recordWindowEvent(options: {
-    store: Map<string, RollingWindow>;
+    store: LRUCache<string, RollingWindow>;
     key: string;
     limit: number;
     capacityCode: GuestAccessError["code"];
@@ -291,8 +282,8 @@ export class GuestAccess {
     capacityMessage: string;
     rateMessage: string;
   }): void {
+    this.pruneExpired(options.store);
     const nowMs = this.clock();
-    this.pruneWindows(options.store, nowMs);
     const existing = options.store.get(options.key);
     const recent = (existing?.timestamps ?? []).filter((createdAt) => createdAt > nowMs - CREATION_WINDOW_MS);
     if (!existing && options.store.size >= this.trackedIpLimit) {
@@ -301,31 +292,15 @@ export class GuestAccess {
     if (recent.length >= options.limit) {
       throw new GuestAccessError(options.rateCode, options.rateMessage);
     }
-    if (existing) clearTimeout(existing.cleanupTimer);
     recent.push(nowMs);
-    const expiresAtMs = nowMs + CREATION_WINDOW_MS;
-    const cleanupTimer = setTimeout(() => {
-      const current = options.store.get(options.key);
-      if (current?.expiresAtMs === expiresAtMs) options.store.delete(options.key);
-    }, CREATION_WINDOW_MS);
-    cleanupTimer.unref();
-    options.store.set(options.key, { timestamps: recent, expiresAtMs, cleanupTimer });
+    options.store.set(options.key, { timestamps: recent, expiresAtMs: nowMs + CREATION_WINDOW_MS });
+    setTimeout(() => this.pruneExpired(options.store), CREATION_WINDOW_MS).unref();
   }
 
-  private pruneWindows(store: Map<string, RollingWindow>, nowMs: number): void {
-    for (const [key, window] of store) {
-      if (nowMs < window.expiresAtMs) continue;
-      clearTimeout(window.cleanupTimer);
-      store.delete(key);
-    }
-  }
-
-  private deleteTicket(ticketHash: string): void {
-    const ticket = this.tickets.get(ticketHash);
-    if (!ticket) return;
-    this.tickets.delete(ticketHash);
-    if (this.ticketHashByGuest.get(ticket.user.id) === ticketHash) {
-      this.ticketHashByGuest.delete(ticket.user.id);
+  private pruneExpired<T extends { expiresAtMs: number }>(store: LRUCache<string, T>): void {
+    const nowMs = this.clock();
+    for (const [key, entry] of store.entries()) {
+      if (nowMs >= entry.expiresAtMs) store.delete(key);
     }
   }
 
@@ -337,7 +312,6 @@ export class GuestAccess {
 type RollingWindow = {
   timestamps: number[];
   expiresAtMs: number;
-  cleanupTimer: NodeJS.Timeout;
 };
 
 function secureEqual(left: string, right: string): boolean {
