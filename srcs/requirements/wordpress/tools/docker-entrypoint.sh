@@ -122,38 +122,13 @@ install_core_files() {
 install_content_files() {
     source_root=/usr/src/wordpress/wp-content
     target_root="${wordpress_dir}/wp-content"
-    if [ -L "$target_root" ]; then
-        fail "WordPress content directory must not be a symbolic link"
+    if [ -L "$target_root" ] || find "$target_root" -type l -print -quit 2>/dev/null | grep -q .; then
+        fail "WordPress content directory must not contain symbolic links"
     fi
     install -d -m 0755 -o www-data -g www-data "$target_root"
-    (
-        cd "$source_root"
-        find . -mindepth 1 -type d -print | sort
-    ) | while IFS= read -r relative; do
-        target="${target_root}/${relative#./}"
-        if [ -L "$target" ] || { [ -e "$target" ] && [ ! -d "$target" ]; }; then
-            fail "WordPress content path is not a regular directory: $relative"
-        fi
-        install -d -m 0755 -o www-data -g www-data "$target"
-    done
-    (
-        cd "$source_root"
-        find . -type f -print | sort
-    ) | while IFS= read -r relative; do
-        source="${source_root}/${relative#./}"
-        target="${target_root}/${relative#./}"
-        if [ -e "$target" ] || [ -L "$target" ]; then
-            continue
-        fi
-        parent="${target%/*}"
-        base="${target##*/}"
-        temporary="${parent}/.${base}.bootstrap.$$"
-        cp -p -- "$source" "$temporary"
-        chown www-data:www-data "$temporary"
-        sync -f "$temporary"
-        mv -- "$temporary" "$target"
-        sync -f "$parent"
-    done
+    cp -rn --preserve=mode,timestamps "${source_root}/." "$target_root/"
+    chown -R www-data:www-data "$target_root"
+    sync -f "$target_root"
 }
 
 publish_config_link() {
@@ -271,71 +246,14 @@ validate_wordpress_config() {
 }
 
 update_config_urls() {
-    updater=/run/container-stack-update-config.php
-    cat >"$updater" <<'PHP'
-<?php
-$path = getenv('CONTAINER_STACK_CONFIG_PATH');
-$url = getenv('CONTAINER_STACK_WORDPRESS_URL');
-$text = file_get_contents($path);
-if ($text === false || is_link($path) || !is_file($path)) {
-    fwrite(STDERR, "WordPress configuration read failed\n");
-    exit(1);
-}
-foreach (['WP_HOME', 'WP_SITEURL'] as $name) {
-    $pattern = "/define\\(\\s*['\"]" . preg_quote($name, '/') . "['\"]\\s*,\\s*.*?\\);/";
-    $replacement = "define('" . $name . "', " . var_export($url, true) . ");";
-    $text = preg_replace($pattern, $replacement, $text, 1, $count);
-    if ($text === null || $count !== 1) {
-        fwrite(STDERR, "WordPress URL setting is missing: " . $name . "\n");
-        exit(1);
-    }
-}
-umask(0077);
-$temporary = tempnam(dirname($path), '.wp-config.url.');
-if ($temporary === false) {
-    fwrite(STDERR, "WordPress configuration temporary file failed\n");
-    exit(1);
-}
-$published = false;
-try {
-    $written = file_put_contents($temporary, $text, LOCK_EX);
-    if ($written !== strlen($text)) {
-        throw new RuntimeException('WordPress configuration write failed');
-    }
-    if (!chmod($temporary, 0600)
-        || !chown($temporary, fileowner($path))
-        || !chgrp($temporary, filegroup($path))) {
-        throw new RuntimeException('WordPress configuration ownership failed');
-    }
-    $handle = fopen($temporary, 'rb');
-    if ($handle === false) {
-        throw new RuntimeException('WordPress configuration reopen failed');
-    }
-    try {
-        if (function_exists('fsync') && !fsync($handle)) {
-            throw new RuntimeException('WordPress configuration fsync failed');
-        }
-    } finally {
-        fclose($handle);
-    }
-    if (!rename($temporary, $path)) {
-        throw new RuntimeException('WordPress configuration publish failed');
-    }
-    $published = true;
-} finally {
-    if (!$published) {
-        @unlink($temporary);
-    }
-}
-PHP
-    chmod 0600 "$updater"
-    if ! CONTAINER_STACK_CONFIG_PATH="$config_path" \
-        CONTAINER_STACK_WORDPRESS_URL="$WORDPRESS_URL" \
-        php "$updater"; then
-        rm -f -- "$updater"
-        fail "WordPress URL configuration update failed"
-    fi
-    rm -f -- "$updater"
+    [ -f "$config_path" ] && [ ! -L "$config_path" ] \
+        || fail "WordPress configuration read failed"
+    for name in WP_HOME WP_SITEURL; do
+        wp config set "$name" "$WORDPRESS_URL" \
+            --allow-root --path="$wordpress_dir" --type=constant >/dev/null 2>&1 \
+            || fail "WordPress URL configuration update failed"
+    done
+    publish_config_link
 }
 
 converge_wordpress_config() {
@@ -406,24 +324,12 @@ ensure_author() {
 verify_user_password() {
     login="$1"
     password="$2"
-    verifier=/run/container-stack-verify-password.php
-    cat >"$verifier" <<'PHP'
-<?php
-$password = rtrim(stream_get_contents(STDIN), "\r\n");
-$login = getenv('CONTAINER_STACK_VERIFY_USER');
-$account = get_user_by('login', $login);
-if (!$account || !wp_check_password($password, $account->user_pass, $account->ID)) {
-    exit(1);
-}
-PHP
-    chmod 0600 "$verifier"
     if ! printf '%s\n' "$password" \
         | CONTAINER_STACK_VERIFY_USER="$login" \
-            wp eval-file "$verifier" --allow-root --path="$wordpress_dir" >/dev/null; then
-        rm -f -- "$verifier"
+            wp eval '$p = rtrim(stream_get_contents(STDIN), "\r\n"); $u = get_user_by("login", getenv("CONTAINER_STACK_VERIFY_USER")); exit($u && wp_check_password($p, $u->user_pass, $u->ID) ? 0 : 1);' \
+            --allow-root --path="$wordpress_dir" >/dev/null; then
         fail "WordPress account password verification failed: $login"
     fi
-    rm -f -- "$verifier"
 }
 
 runtime() {

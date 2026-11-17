@@ -52,12 +52,10 @@ class BackupError(RuntimeError):
 
 
 def sha256_stream(stream: BinaryIO) -> str:
-    digest = hashlib.sha256()
     stream.seek(0)
-    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-        digest.update(chunk)
+    digest = hashlib.file_digest(stream, "sha256").hexdigest()
     stream.seek(0)
-    return digest.hexdigest()
+    return digest
 
 
 def sha256(path: Path) -> str:
@@ -265,19 +263,7 @@ class ComposeProject:
 
 
 def rendered_resource_names(project: ComposeProject) -> dict[str, set[str]]:
-    result = project.run(
-        "config",
-        "--format",
-        "json",
-        capture=True,
-        timeout=QUERY_TIMEOUT_SECONDS,
-    )
-    try:
-        config = json.loads(result.stdout)
-    except (UnicodeDecodeError, json.JSONDecodeError) as error:
-        raise BackupError(f"Compose 설정 JSON을 읽을 수 없습니다: {error}") from error
-    if not isinstance(config, dict):
-        raise BackupError("Compose 설정이 객체 형식이 아닙니다")
+    config = project.config()
 
     names: dict[str, set[str]] = {"volume": set(), "network": set()}
     for config_key, resource_kind in (("volumes", "volume"), ("networks", "network")):
